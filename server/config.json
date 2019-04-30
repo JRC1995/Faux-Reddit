@@ -1,0 +1,6 @@
+{
+    "dbHost": "localhost",
+    "user"     : "admin",
+    "password" : "1234",
+    "database" : "proto_reddit"
+}
