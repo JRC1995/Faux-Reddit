@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Header />
+    <Login />
     <Posts />
     <Categories />
   </div>
@@ -10,12 +11,13 @@
 import Header from './components/header';
 import Posts from './components/posts';
 import Categories from './components/categories';
-
+import Login from './components/login';
 
 export default {
   name:"app",
   components: {
     Header,
+    Login,
     Posts,
     Categories
   }
