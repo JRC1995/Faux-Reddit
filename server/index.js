@@ -30,23 +30,6 @@ db.connect(function(err) {
   console.log('connected as id ' + db.threadId);
 });
 
-// ESTABLISH MONGODB CONNECTION
-
-var MongoClient = mongoDB.MongoClient;
-var url = "mongodb://localhost/";
-
-MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
-  if (err) throw err;
-  var dbo = db.db("proto_reddit");
-  dbo.collection("comments").findOne({}, function(err, result) {
-      if (err) throw err;
-      console.log(result);
-      db.close();
-    });
-});
-
-//const mongoDB = [write code]
-
 // RETRIEVE THREADS FOR FRONTPAGE
 
 app.get('/frontpage_threads',(req,res)=>{
