@@ -4,6 +4,7 @@ const mysql = require('mysql');
 const express = require('express');
 var cors = require('cors')
 var Config = require('./config.json');
+var mongoDB = require('mongodb');
 
 // MIDDLEWARE
 
@@ -30,6 +31,19 @@ db.connect(function(err) {
 });
 
 // ESTABLISH MONGODB CONNECTION
+
+var MongoClient = mongoDB.MongoClient;
+var url = "mongodb://localhost/";
+
+MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+  if (err) throw err;
+  var dbo = db.db("proto_reddit");
+  dbo.collection("comments").findOne({}, function(err, result) {
+      if (err) throw err;
+      console.log(result);
+      db.close();
+    });
+});
 
 //const mongoDB = [write code]
 
@@ -118,6 +132,69 @@ app.get('/subcategories',(req,res)=>{
     res.send(results);
   });
 });
+
+/* Backup code ---> using cursor to iterate through rows
+
+app.get('/comments',(req,res)=>{
+
+  thread_id = req.query.thread_id;
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+  var comments_list = []
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    var cursor = dbo.collection("comments").find({parent_id: "t"+thread_id});
+    cursor.forEach(function(doc,err){
+      comments_list.push(doc)
+    },function(){
+      db.close();
+      res.send(comments_list);
+    });
+  });
+});
+
+*/
+app.get('/comments',(req,res)=>{
+
+  thread_id = req.query.thread_id;
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").findOne({_id: "t"+thread_id}, function(err, result) {
+        if (err) throw err;
+        console.log(result.child);
+        db.close();
+        res.send(result.child);
+      });
+  });
+});
+
+app.get('/subcomments',(req,res)=>{
+
+  comment_id = req.query.comment_id;
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").findOne({_id: comment_id}, function(err, result) {
+        if (err) throw err;
+        console.log(result.child);
+        db.close();
+        res.send(result.child);
+      });
+  });
+});
+
 
 // ESTABLISH SERVER PORT
 
