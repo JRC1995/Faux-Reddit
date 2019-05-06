@@ -4,6 +4,7 @@ const mysql = require('mysql');
 const express = require('express');
 var cors = require('cors')
 var Config = require('./config.json');
+var mongoDB = require('mongodb');
 
 // MIDDLEWARE
 
@@ -28,10 +29,6 @@ db.connect(function(err) {
 
   console.log('connected as id ' + db.threadId);
 });
-
-// ESTABLISH MONGODB CONNECTION
-
-//const mongoDB = [write code]
 
 // RETRIEVE THREADS FOR FRONTPAGE
 
@@ -61,7 +58,7 @@ app.get('/frontpage_threads',(req,res)=>{
   let sql = 'SELECT * \
              FROM thread t JOIN user_details u ON u.user_id = t.user_id \
              WHERE removed=0 '+sql_component+'\
-             ORDER BY CAST(t.created_utc/100 AS INT) DESC, t.score DESC \
+             ORDER BY CAST(t.created_utc/(360*24) AS INT) DESC, t.score DESC \
              LIMIT 100';
 
   db.query({
@@ -77,6 +74,27 @@ app.get('/frontpage_threads',(req,res)=>{
     // error will be an Error if one occurred during the query
     // results will contain the results of the query
     // fields will contain information about the returned results fields (if any)
+  });
+});
+
+// RETRIEVE USER DETAILS
+
+app.get('/userdetails',(req,res)=>{
+
+  username = req.query.username;
+
+  let sql = 'SELECT user_id, user_name, email, karma FROM user_details WHERE user_name = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [username],
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    res.send(results);
   });
 });
 
@@ -118,6 +136,108 @@ app.get('/subcategories',(req,res)=>{
     res.send(results);
   });
 });
+
+// RETRIEVE CATEGORY AND SUBCATEGORY OF A SELECTED THREAD
+
+app.get('/description',(req,res)=>{
+
+  thread_id = req.query.thread_id;
+
+  let sql = 'SELECT c.name as category_name,s.name as subforum_name, c.description as category_description, s.description as subforum_description \
+             FROM (thread t JOIN subforum s ON t.subforum_id = s.subforum_id) JOIN category c ON s.category_id = c.category_id \
+             WHERE t.thread_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    console.log(results)
+    res.send(results);
+  });
+});
+
+/* Backup code ---> using cursor to iterate through rows
+
+app.get('/comments',(req,res)=>{
+
+  thread_id = req.query.thread_id;
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+  var comments_list = []
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    var cursor = dbo.collection("comments").find({parent_id: "t"+thread_id});
+    cursor.forEach(function(doc,err){
+      comments_list.push(doc)
+    },function(){
+      db.close();
+      res.send(comments_list);
+    });
+  });
+});
+
+*/
+app.get('/comments',(req,res)=>{
+
+  thread_id = req.query.thread_id;
+  console.log(thread_id)
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").findOne({_id: "t"+thread_id}, function(err, result) {
+        if (err) throw err;
+        if (result==null){
+          output = [];
+        }
+        else
+        {
+          output = result.child;
+        }
+        console.log(output);
+        db.close();
+        res.send(output);
+      });
+  });
+});
+
+app.get('/subcomments',(req,res)=>{
+
+  comment_id = req.query.comment_id;
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").findOne({_id: comment_id}, function(err, result) {
+        if (err) throw err;
+        if (result==null){
+          output = [];
+        }
+        else
+        {
+          output = result.child;
+        }
+        console.log(output);
+        db.close();
+        res.send(output);
+      });
+  });
+});
+
 
 // ESTABLISH SERVER PORT
 
