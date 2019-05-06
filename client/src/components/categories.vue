@@ -51,8 +51,8 @@ axios.get('http://localhost:5000/categories')
   text-overflow: ellipsis;
   padding-left: 30px;
   padding-right: 5px;
-  padding-top: 2%;
-  box-shadow: -8px 8px 8px -6px #999;
+  padding-top: 0.9%;
+  box-shadow: -8px 50% 8px -6px #999,8px 50% 8px -6px #999;
   margin-top: -2px;
 }
 
