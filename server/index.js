@@ -119,6 +119,24 @@ app.get('/subcategories',(req,res)=>{
   });
 });
 
+// RETRIEVE USER DETAILS FOR LOGIN AUTHENTICATION
+app.get('/user_details',(req, res)=>{
+  user_name = req.query.user_name;
+
+  let sql = 'SELECT password FROM user_details WHERE user_name = ?;';
+  db.query({
+    sql: sql,
+    timeout: 40000,
+    values: [user_name]
+  }, function(error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    res.send(JSON.stringify(results));
+    console.log(results);
+  });
+});
 // ESTABLISH SERVER PORT
 
 const PORT = process.env.PORT || 5000;
