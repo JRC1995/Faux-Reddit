@@ -7,7 +7,7 @@
   <div class="outer_form">
 
     <div class="login-form" v-if="this.login_form == true">
-      <form id="login_form">
+      <form id="login_form" v-on:submit.prevent>
         <input type="text" v-model="login_user" id="login_user" class="field" placeholder="Enter Username" required><br>
         <input type="password" v-model="login_pass" id="login_pass" class="field" placeholder="Enter Password" required><br>
         <button class="button_style" style="margin-left:10px;" v-on:click="authenticate()">Log in</button>
@@ -18,7 +18,7 @@
     </div>
 
    <div class="registration-form" v-else-if="this.registration_form == true">
-     <form id="signup_form">
+     <form id="signup_form" v-on:submit.prevent>
        <table>
        <tr><td>Username: </td><td><input type="text" v-model="signup_user" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
        <tr><td>Email: </td><td><input type="email" v-model="signup_email" class="field" placeholder="Enter Email" required></td></tr>
@@ -144,7 +144,7 @@ export default {
             }
           }).then(response =>
             { var pass = response.data;
-              console.log(pass[0])
+
               if (typeof pass[0] == "undefined") {
                 document.getElementById('login_user').setCustomValidity("Incorrect username");
                 document.getElementById("login_dummy_button").click()
