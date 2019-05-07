@@ -93,7 +93,29 @@ app.get('/authenticate',(req, res)=>{
       return;
     }
     res.send(JSON.stringify(results));
-    console.log(results);
+  });
+});
+
+// UPDATE USER DETAILS FOR NEW SIGNUP
+
+app.get('/signup',(req,res)=>{
+
+  username = req.query.username;
+  email = req.query.email;
+  password = req.query.password;
+
+  let sql = 'INSERT INTO user_details (user_name, email, karma, password) VALUES (?, ?, 0, ?);'
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [username, email, password],
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    res.send(results);
   });
 });
 
