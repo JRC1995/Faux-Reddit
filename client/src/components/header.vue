@@ -7,24 +7,27 @@
   <div class="outer_form">
 
     <div class="login-form" v-if="this.login_form == true">
-      <form>
-        <input type="text" class="field" placeholder="Enter Username" required><br>
-        <input type="password" class="field" placeholder="Enter Password" required><br>
-        <button class="button_style" style="margin-left:10px;"v-on:click="authenticate()">Log in</button>
+      <form id="login_form">
+        <input type="text" v-model="login_user" id="login_user" class="field" placeholder="Enter Username" required><br>
+        <input type="password" v-model="login_pass" id="login_pass" class="field" placeholder="Enter Password" required><br>
+        <button class="button_style" style="margin-left:10px;" v-on:click="authenticate()">Log in</button>
+        <button id="login_dummy_button" style="appearance:none;background:white;border:none;padding:0;"></button>
         <br>
       </form>
        <button class="link" style="margin-left:10px;margin-top:7px;" v-on:click="sign_up">Don't have an account? Click here!</button>
     </div>
 
    <div class="registration-form" v-else-if="this.registration_form == true">
-     <form>
+     <form id="signup_form">
        <table>
-       <tr><td>Username: </td><td><input type="text" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
-       <tr><td>Email: </td><td><input type="email" class="field" placeholder="Enter Email" required></td></tr>
-       <tr><td>Password: </td><td><input type="password" class="field" id="password" placeholder="Enter Password" required></td></tr>
-       <tr><td>Re-enter Password: </td><td><input type="password" id="confirm_password" class="field" v-on:change="confirm_password()" placeholder="Re-enter Password" required></td></tr>
+       <tr><td>Username: </td><td><input type="text" v-model="signup_user" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
+       <tr><td>Email: </td><td><input type="email" v-model="signup_email" class="field" placeholder="Enter Email" required></td></tr>
+       <tr><td>Password: </td><td><input type="password" v-model="signup_pass"  class="field" id="password" placeholder="Enter Password" required></td></tr>
+       <tr><td>Re-enter Password: </td><td><input type="password" v-model="signup_cpass"  id="confirm_password" class="field" v-on:change="confirm_password()" placeholder="Re-enter Password" required></td></tr>
        </table>
-       <button class="button_style" style="margin-top:10px;" v-on:click="register()">Sign Up</button><br>
+       <button class="button_style" style="margin-top:10px;" v-on:click="register()">Sign Up</button>
+       <button id="signup_dummy_button" style="appearance:none;background:white;border:none;padding:0;"></button>
+       <br>
      </form>
       <button class="link" style="margin-top:7px;" v-on:click="log_in(false)">Already have an account? Click here to log in!</button>
    </div>
@@ -69,12 +72,12 @@
 
 </div>
 
-  </div>
+</div>
 
 </template>
 
 <script>
-
+import axios from 'axios'
 
 export default {
   name: "Header",
@@ -83,14 +86,22 @@ export default {
     return{
       login_form: false,
       registration_form: false,
+      login_user: "",
+      login_pass: "",
+      signup_user: "",
+      signup_pass: "",
+      signup_email: "",
+      signup_cpass: ""
     }
   },
 
 
   methods:{
+
     back(){
       this.$store.commit('back')
     },
+
     log_in(flip_blur){
       if (flip_blur)
       {
@@ -99,44 +110,94 @@ export default {
       this.login_form = true;
       this.registration_form = false;
     },
+
     sign_up(){
       this.login_form = false;
       this.registration_form = true;
     },
+
     cancel_form(){
       this.$store.commit('flip_blur');
       this.login_form = false;
       this.registration_form = false;
       this.$store.commit("show_userdetails",false);
+      this.signup_pass = "";
+      this.signup_cpass = "";
+      this.signup_email = "";
+      this.signup_user = "";
+      this.login_user = "";
+      this.login_pass = "";
     },
+
     authenticate(){
-      this.$store.commit("flip_logged_in");
-      this.$store.commit("update_username","Admin");
-      this.$store.commit('flip_blur');
-      this.login_form = false;
-      this.registration_form = false;
-      this.$store.commit("show_userdetails",false);
 
+      document.getElementById('login_pass').setCustomValidity("");
+      document.getElementById('login_user').setCustomValidity("");
+
+      var f = document.getElementById("login_form")
+
+      if (f.checkValidity()){
+
+        axios.get('http://localhost:5000/authenticate', {
+            params: {
+              user_name: this.login_user
+            }
+          }).then(response =>
+            { var pass = response.data;
+              console.log(pass[0])
+              if (typeof pass[0] == "undefined") {
+                document.getElementById('login_user').setCustomValidity("Incorrect username");
+                document.getElementById("login_dummy_button").click()
+              }
+              else if(pass[0].password != this.login_pass){
+                document.getElementById('login_pass').setCustomValidity("Incorrect username or password");
+                document.getElementById("login_dummy_button").click()
+              }
+              else{
+                this.$store.commit("flip_logged_in");
+                this.$store.commit("update_username",this.login_user);
+                this.$store.commit('flip_blur');
+                this.login_form = false;
+                this.login_user = "";
+                this.login_pass = "";
+              }
+            })
+        }
     },
+
     register(){
-      this.$store.commit('flip_blur');
-      this.login_form = false;
-      this.registration_form = false;
-      this.$store.commit("show_userdetails",false);
+
+      var f = document.getElementById("signup_form")
+      if (f.checkValidity()){
+
+        // do these on success
+        this.$store.commit('flip_blur');
+        this.login_form = false;
+        this.registration_form = false;
+        this.$store.commit("show_userdetails",false);
+        this.signup_pass = "";
+        this.signup_cpass = "";
+        this.signup_email = "";
+        this.signup_user = "";
+      }
 
     },
+
+
     confirm_password() {
-      if (document.getElementById('confirm_password').value != document.getElementById('password').value) {
+      if (this.signup_pass != this.signup_cpass) {
           document.getElementById('confirm_password').setCustomValidity('Passwords do not match');
       } else {
           // input is valid -- reset the error message
           document.getElementById('confirm_password').setCustomValidity('');
       }
    },
+
    log_out(){
      this.$store.commit("flip_logged_in");
      this.$store.commit("update_username",null);
    },
+
    username_click(){
      this.$store.commit('flip_blur');
      this.$store.commit("select_username",this.$store.state.username);
