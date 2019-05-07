@@ -1,9 +1,11 @@
 <template>
   <div id="app">
     <Header />
-    <Login />
-    <Posts />
-    <Categories />
+    <Posts v-if="this.$store.state.comment_state==false"/>
+    <Comments v-else-if="this.$store.state.subcomment_state==false"/>
+    <Subcomments v-else/>
+    <Categories  v-if="this.$store.state.comment_state==false"/>
+    <Description v-else />
   </div>
 </template>
 
@@ -11,16 +13,22 @@
 import Header from './components/header';
 import Posts from './components/posts';
 import Categories from './components/categories';
-import Login from './components/login';
+import Comments from './components/comments';
+import Subcomments from './components/subcomments';
+import Description from './components/description';
+
 
 export default {
   name:"app",
   components: {
     Header,
-    Login,
     Posts,
-    Categories
-  }
+    Comments,
+    Subcomments,
+    Categories,
+    Description
+  },
+
 }
 </script>
 
@@ -38,6 +46,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
 }
+
 
 
 </style>
