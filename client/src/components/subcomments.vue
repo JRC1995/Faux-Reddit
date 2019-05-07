@@ -5,7 +5,7 @@
           <td style="vertical-align: middle;">
             <div class="score_block" >
               <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
-              <br><b>{{this.$store.state.selected_comment.score}}</b><br>
+              <br><b>{{format_score(this.$store.state.selected_comment.score)}}</b><br>
               <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
@@ -32,7 +32,7 @@
           <td style="vertical-align: middle;">
             <div class="score_block" >
               <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
-              <br><b>{{subcomment.score}}</b><br>
+              <br><b>{{format_score(subcomment.score)}}</b><br>
               <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
@@ -124,6 +124,16 @@ methods: {
     this.$store.commit('flip_blur');
     this.$store.commit("select_username",username);
     this.$store.commit("show_userdetails",true);
+  },
+  format_score(score){
+    if (parseInt(score) <= 9999){
+      return score;
+    }
+    else{
+      score = parseInt(parseInt(score)/1000);
+      score = String(score)+"K";
+      return score;
+    }
   }
 
 }
