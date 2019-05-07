@@ -29,8 +29,7 @@ export default new Vuex.Store({
     add_subforum_id(state, payload){
       const event = payload.event
       const subforum_id = payload.subforum_id
-      console.log(event)
-      console.log(subforum_id)
+
       if (event.target.checked)
       {
           state.list_sub_id.push(subforum_id)
@@ -52,7 +51,6 @@ export default new Vuex.Store({
     },
 
     update_threads(state,data){
-      console.log(data)
       state.threads = data
     },
 
@@ -77,7 +75,6 @@ export default new Vuex.Store({
     },
 
     update_subcomments(state,data){
-      console.log(data)
       state.subcomments = data
     },
 
