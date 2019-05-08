@@ -247,7 +247,7 @@ methods: {
       }
     }).then((response) => {
 
-        message = response.data;
+        var message = response.data;
         if (message == "success") this.thread_deleted = true;
         else alert("Something went wrong! Try again, perhaps?");
       })
