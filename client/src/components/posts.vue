@@ -5,9 +5,9 @@
         <tr>
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting(thread.thread_id, 1)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
               <br><b>{{format_score(thread.score)}}</b><br>
-              <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting(thread.thread_id, -1)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
           <td style="width:100%;vertical-align: middle;">
@@ -80,6 +80,7 @@ methods: {
     this.$store.commit('flip_blur');
     this.$store.commit("select_username",username);
     this.$store.commit("show_userdetails",true);
+    console.log("ASBWAD");
   },
   format_score(score){
     if (parseInt(score) <= 9999){
@@ -90,6 +91,10 @@ methods: {
       score = String(score)+"K";
       return score;
     }
+  },
+  voting(thread_id, sentiment){
+    //if backend sentiment is equal to new sentiment, set sentiment to 0
+    console.log(this.$store.state.username, thread_id, sentiment);
   }
 }
 }

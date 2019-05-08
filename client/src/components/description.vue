@@ -5,7 +5,7 @@
       {{this.description[0].category_description}} <br>
       <div class="title"> <b>Subcategory: {{this.description[0].subforum_name}}</b> </div> <hr>
       {{this.description[0].subforum_description}} <br>
-      <button class="suscribe">Suscribe</button>
+      <button class="suscribe" v-on:click="subscribe()">Suscribe</button>
     </div>
   </div>
 </template>
@@ -27,9 +27,18 @@ data(){
 mounted () {
 axios.get('http://localhost:5000/description',{params:{thread_id:this.$store.state.selected_thread.thread_id}})
   .then(response => (this.description = response.data))
+},
+
+methods: {
+  subscribe()
+  {
+    console.log(this.$store.state.username, this.$store.state.selected_thread.subforum_id)
+  }
 }
 
 }
+
+
 
 </script>
 

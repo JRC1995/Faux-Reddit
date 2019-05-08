@@ -31,7 +31,7 @@
         <tr>
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="upvote()"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
               <br><b>{{format_score(subcomment.score)}}</b><br>
               <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
@@ -134,6 +134,9 @@ methods: {
       score = String(score)+"K";
       return score;
     }
+  },
+  upvote(){
+    console.log("Abdcd");
   }
 
 }
