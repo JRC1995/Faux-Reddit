@@ -58,7 +58,7 @@ app.get('/frontpage_threads',(req,res)=>{
   let sql = 'SELECT * \
              FROM thread t JOIN user_details u ON u.user_id = t.user_id \
              WHERE removed=0 '+sql_component+'\
-             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC \
+             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC \
              LIMIT 100';
 
   db.query({
@@ -187,6 +187,28 @@ app.get('/all_subcategories',(req,res)=>{
       return;
     }
     res.send(results);
+  });
+});
+
+// RETRIEVE USER DETAILS FOR LOGIN AUTHENTICATION
+
+app.get('/delete_thread',(req, res)=>{
+  thread_id = req.query.thread_id;
+
+  let sql = 'UPDATE thread SET removed=1 WHERE thread_id = ?;';
+  db.query({
+    sql: sql,
+    timeout: 40000,
+    values: [thread_id]
+  }, function(error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      res.send("unsuccessful");
+      return;
+    }
+    else{
+      res.send("success");
+    }
   });
 });
 
