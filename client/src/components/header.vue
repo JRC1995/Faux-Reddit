@@ -164,14 +164,17 @@ export default {
                 this.login_user = "";
                 this.login_pass = "";
 
-                axios.get('http://localhost:5000/moderator_status',{
-                  params: {
-                    subforum_id: this.$store.state.selected_thread.subforum_id,
-                    user_id: this.$store.state.user_id
-                  }
-                }).then((response) => {
-                    this.$store.commit('update_moderator_status', response.data);
-                  })
+                if (this.$store.state.selected_thread!=null)
+                {
+                  axios.get('http://localhost:5000/moderator_status',{
+                    params: {
+                      subforum_id: this.$store.state.selected_thread.subforum_id,
+                      user_id: this.$store.state.user_id
+                    }
+                  }).then((response) => {
+                      this.$store.commit('update_moderator_status', response.data);
+                    })
+                }
               }
             })
         }
@@ -188,6 +191,7 @@ export default {
             username: this.signup_user
           }
         }).then(response => {
+
           var details = response.data;
           // No username found for this -- can submit the details
           if (typeof details[0] == "undefined") {
@@ -199,30 +203,52 @@ export default {
                 password: this.signup_pass
               }
             }).then(response => {
+
               console.log(this.signup_user);
               this.$store.commit('flip_blur');
 
               this.registration_form = false;
               this.$store.commit("show_userdetails",false);
 
-              this.login_form = true;
-              this.login_user = this.signup_user;
-              this.login_pass = this.signup_pass;
-              document.getElementById("login_button").click();
-              this.login_form = false;
+              this.$store.commit("update_username",this.signup_user);
 
-              this.signup_pass = "";
-              this.signup_cpass = "";
-              this.signup_email = "";
-              this.signup_user = "";
-          })
+              axios.get('http://localhost:5000/authenticate', {
+                  params: {
+                    user_name: this.signup_user
+                  }
+                }).then(response =>
+                  { var pass = response.data;
+                    this.$store.commit("update_user_id",pass[0].user_id);
+
+                    this.$store.commit("flip_logged_in");
+
+
+                    this.signup_pass = "";
+                    this.signup_cpass = "";
+                    this.signup_email = "";
+                    this.signup_user = "";
+
+
+                    if (this.$store.state.selected_thread!=null)
+                    {
+                      axios.get('http://localhost:5000/moderator_status',{
+                        params: {
+                          subforum_id: this.$store.state.selected_thread.subforum_id,
+                          user_id: this.$store.state.user_id
+                        }
+                      }).then((response) => {
+                          this.$store.commit('update_moderator_status', response.data);
+                        })
+                    }
+                  });
+              });
           }
           // Username taken/in use: notify user of this
           else {
             document.getElementById('signup_user').setCustomValidity("Username taken");
             document.getElementById('signup_dummy_button').click();
           }
-        })
+        });
       }
 
     },
