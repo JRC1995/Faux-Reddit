@@ -52,7 +52,29 @@ methods: {
       params: {
         param: param
       }}).then((response) => {
-        this.$store.commit("update_threads",response.data)
+        var threads = response.data
+        var item_no = 6
+
+        //format threads
+        var pages = Math.ceil(threads.length/item_no)
+
+        this.$store.commit('update_pages',pages)
+
+        var page_dict = {}
+
+        for (var page=1;page<=pages;page++){
+          var page_threads = []
+          for (var i=(page-1)*item_no;i<((page-1)*item_no)+item_no;i++){
+            if (i< threads.length)
+            {
+              page_threads.push(threads[i])
+            }
+          }
+          page_dict[page] = page_threads
+
+        }
+
+        this.$store.commit("update_threads",page_dict)
       })
   }
 }
