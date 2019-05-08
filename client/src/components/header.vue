@@ -169,18 +169,43 @@ export default {
 
       var f = document.getElementById("signup_form")
       if (f.checkValidity()){
-
-        // do these on success
-        this.$store.commit('flip_blur');
-        this.login_form = false;
-        this.registration_form = false;
-        this.$store.commit("show_userdetails",false);
-        this.signup_pass = "";
-        this.signup_cpass = "";
-        this.signup_email = "";
-        this.signup_user = "";
-      }
-
+        // Check if username is taken in the database
+        axios.get('http://localhost:5000/userdetails', {
+          params: {
+            username: this.signup_user
+          }
+        }).then(response => {
+          var details = response.data;
+          // No username found for this -- can submit the details
+          if (typeof details[0] == "undefined") {
+            // do these on success
+            axios.get('http://localhost:5000/signup', {
+              params: {
+                username: this.signup_user,
+                email: this.signup_email,
+                password: this.signup_pass
+              }
+            }).then(response => {
+              console.log(this.signup_user);
+              this.$store.commit('flip_blur');
+              this.login_form = false;
+              this.registration_form = false;
+              this.$store.commit("show_userdetails",false);
+              this.signup_pass = "";
+              this.signup_cpass = "";
+              this.signup_email = "";
+              this.signup_user = ""; 
+          })
+          }
+          // Username taken/in use: notify user of this
+          else {
+            document.getElementById('signup_user').setCustomValidity("Username taken");
+            document.getElementById('signup_dummy_button').click();
+          }
+        })
+        }
+ 
+    
     },
 
 
