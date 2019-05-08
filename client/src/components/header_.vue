@@ -7,28 +7,26 @@
   <div class="outer_form">
 
     <div class="login-form" v-if="this.login_form == true">
-      <form id="login_form" v-on:submit.prevent>
-        <input type="text" v-model="login_user" id="login_user" class="field" placeholder="Enter Username" required><br>
-        <input type="password" v-model="login_pass" id="login_pass" class="field" placeholder="Enter Password" required><br>
-        <button id ="login_button" class="button_style" style="margin-left:10px;" v-on:click="authenticate()">Log in</button>
+      <form>
+        <input type="text" v-model="login_user" class="field" placeholder="Enter Username" required><br>
+        <input type="password" v-model="login_pass" id="login_pass_" class="field" placeholder="Enter Password" required><br>
+        <div v-if="alert==true">{{alert_message}}</div>
+        <button class="button_style" style="margin-left:10px;" v-on:click="authenticate()">Log in</button>
         <button id="login_dummy_button" style="appearance:none;background:white;border:none;padding:0;"></button>
         <br>
       </form>
-      <button class="link" style="margin-left:10px;margin-top:7px;" v-on:click="sign_up">Don't have an account? Click here!</button>
-
+       <button class="link" style="margin-left:10px;margin-top:7px;" v-on:click="sign_up">Don't have an account? Click here!</button>
     </div>
 
    <div class="registration-form" v-else-if="this.registration_form == true">
-     <form id="signup_form" v-on:submit.prevent>
+     <form>
        <table>
-       <tr><td>Username: </td><td><input type="text" v-model="signup_user" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
-       <tr><td>Email: </td><td><input type="email" v-model="signup_email" class="field" placeholder="Enter Email" required></td></tr>
-       <tr><td>Password: </td><td><input type="password" v-model="signup_pass"  class="field" id="password" placeholder="Enter Password" required></td></tr>
-       <tr><td>Re-enter Password: </td><td><input type="password" v-model="signup_cpass"  id="confirm_password" class="field" v-on:change="confirm_password()" placeholder="Re-enter Password" required></td></tr>
+       <tr><td>Username: </td><td><input type="text" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
+       <tr><td>Email: </td><td><input type="email" class="field" placeholder="Enter Email" required></td></tr>
+       <tr><td>Password: </td><td><input type="password" class="field" id="password" placeholder="Enter Password" required></td></tr>
+       <tr><td>Re-enter Password: </td><td><input type="password" id="confirm_password" class="field" v-on:change="confirm_password()" placeholder="Re-enter Password" required></td></tr>
        </table>
-       <button class="button_style" style="margin-top:10px;" v-on:click="register()">Sign Up</button>
-       <button id="signup_dummy_button" style="appearance:none;background:white;border:none;padding:0;"></button>
-       <br>
+       <button class="button_style" style="margin-top:10px;" v-on:click="register()">Sign Up</button><br>
      </form>
       <button class="link" style="margin-top:7px;" v-on:click="log_in(false)">Already have an account? Click here to log in!</button>
    </div>
@@ -73,7 +71,7 @@
 
 </div>
 
-</div>
+  </div>
 
 </template>
 
@@ -87,22 +85,18 @@ export default {
     return{
       login_form: false,
       registration_form: false,
-      login_user: "",
-      login_pass: "",
-      signup_user: "",
-      signup_pass: "",
-      signup_email: "",
-      signup_cpass: ""
+      login_user: null,
+      login_pass: null,
+      alert: true,
+      alert_message: "",
     }
   },
 
 
   methods:{
-
     back(){
       this.$store.commit('back')
     },
-
     log_in(flip_blur){
       if (flip_blur)
       {
@@ -111,138 +105,61 @@ export default {
       this.login_form = true;
       this.registration_form = false;
     },
-
     sign_up(){
       this.login_form = false;
       this.registration_form = true;
     },
-
     cancel_form(){
       this.$store.commit('flip_blur');
-      this.$store.commit('editor',false);
       this.login_form = false;
       this.registration_form = false;
       this.$store.commit("show_userdetails",false);
-      this.signup_pass = "";
-      this.signup_cpass = "";
-      this.signup_email = "";
-      this.signup_user = "";
-      this.login_user = "";
-      this.login_pass = "";
     },
-
     authenticate(){
 
-      document.getElementById('login_pass').setCustomValidity("");
-      document.getElementById('login_user').setCustomValidity("");
-
-      var f = document.getElementById("login_form")
-
-      if (f.checkValidity()){
-
-        axios.get('http://localhost:5000/authenticate', {
-            params: {
-              user_name: this.login_user
-            }
-          }).then(response =>
-            { var pass = response.data;
-
-              if (typeof pass[0] == "undefined") {
-                document.getElementById('login_user').setCustomValidity("Incorrect username");
-                document.getElementById("login_dummy_button").click()
-              }
-              else if(pass[0].password != this.login_pass){
-                document.getElementById('login_pass').setCustomValidity("Incorrect username or password");
-                document.getElementById("login_dummy_button").click()
-              }
-              else{
-                this.$store.commit("flip_logged_in");
-                this.$store.commit("update_username",this.login_user);
-                this.$store.commit("update_user_id",pass[0].user_id);
-                this.$store.commit('flip_blur');
-                this.login_form = false;
-                this.login_user = "";
-                this.login_pass = "";
-
-                axios.get('http://localhost:5000/moderator_status',{
-                  params: {
-                    subforum_id: this.$store.state.selected_thread.subforum_id,
-                    user_id: this.$store.state.user_id
-                  }
-                }).then((response) => {
-                    this.$store.commit('update_moderator_status', response.data);
-                  })
-              }
-            })
-        }
-    },
-
-    register(){
-
-      var f = document.getElementById("signup_form")
-      if (f.checkValidity()){
-
-        // Check if username is taken in the database
-        axios.get('http://localhost:5000/userdetails', {
+      axios.get('http://localhost:5000/authenticate', {
           params: {
-            username: this.signup_user
+            user_name: this.login_user
           }
-        }).then(response => {
-          var details = response.data;
-          // No username found for this -- can submit the details
-          if (typeof details[0] == "undefined") {
-            // do these on success
-            axios.get('http://localhost:5000/signup', {
-              params: {
-                username: this.signup_user,
-                email: this.signup_email,
-                password: this.signup_pass
-              }
-            }).then(response => {
-              console.log(this.signup_user);
+        }).then(response =>
+          { var pass = response.data;
+            console.log(pass[0])
+            console.log(this.login_pass)
+            if (typeof pass[0] == "undefined") {
+              alert('Incorrect username');
+            }
+            else if(pass[0].password != this.login_pass){
+              //alert("Incorrect username or password")
+              document.getElementById('login_pass_').setCustomValidity("Incorrect username or password");
+              document.getElementById("login_dummy_button").click()
+            }
+            else{
+              this.$store.commit("flip_logged_in");
+              this.$store.commit("update_username",this.login_user);
               this.$store.commit('flip_blur');
-
-              this.registration_form = false;
-              this.$store.commit("show_userdetails",false);
-
-              this.login_form = true;
-              this.login_user = this.signup_user;
-              this.login_pass = this.signup_pass;
-              document.getElementById("login_button").click();
               this.login_form = false;
-
-              this.signup_pass = "";
-              this.signup_cpass = "";
-              this.signup_email = "";
-              this.signup_user = "";
+            }
           })
-          }
-          // Username taken/in use: notify user of this
-          else {
-            document.getElementById('signup_user').setCustomValidity("Username taken");
-            document.getElementById('signup_dummy_button').click();
-          }
-        })
-      }
+    },
+    register(){
+      this.$store.commit('flip_blur');
+      this.login_form = false;
+      this.registration_form = false;
+      this.$store.commit("show_userdetails",false);
 
     },
-
     confirm_password() {
-      if (this.signup_pass != this.signup_cpass) {
+      if (document.getElementById('confirm_password').value != document.getElementById('password').value) {
           document.getElementById('confirm_password').setCustomValidity('Passwords do not match');
       } else {
           // input is valid -- reset the error message
           document.getElementById('confirm_password').setCustomValidity('');
       }
    },
-
    log_out(){
      this.$store.commit("flip_logged_in");
      this.$store.commit("update_username",null);
-     this.$store.commit("update_user_id",null);
-     this.$store.commit('update_moderator_status', false);
    },
-
    username_click(){
      this.$store.commit('flip_blur');
      this.$store.commit("select_username",this.$store.state.username);
@@ -333,7 +250,7 @@ export default {
   padding-top: 40px;
   padding-bottom: 40px;
   border-radius: 10px;
-  margin-left: -160px;
+  margin-left: -150px;
   margin-top: 10%;
   box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
 
@@ -351,8 +268,8 @@ export default {
   padding-top: 40px;
   padding-bottom: 40px;
   border-radius: 10px;
+  margin-left: -250px;
   margin-top: 10%;
-  margin-left: -260px;
   box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
   font-size: 15px;
 
@@ -370,11 +287,10 @@ export default {
   padding-top: 40px;
   padding-bottom: 40px;
   border-radius: 10px;
-  margin-left: -160px;
+  margin-left: -150px;
   margin-top: 10%;
   box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
   font-size: 15px;
-
 
 }
 

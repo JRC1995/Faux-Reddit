@@ -17,11 +17,16 @@ export default new Vuex.Store({
     history: [{comment_state: false,selected_thread: null,subcomment_state: false,selected_comment: null,subcomments: []}],
     blur: false,
     username: null,
+    user_id: null,
     logged_in: false,
     moderator_status: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true},
     selected_username: null,
     userdetails_status: false,
     userdetails: null,
+    editor: false,
+    pages: 1,
+    page: 1,
+    moderator_status: false,
 
   },
   mutations: {
@@ -102,6 +107,11 @@ export default new Vuex.Store({
       state.username = username
     },
 
+    update_user_id(state,user_id){
+      state.user_id = user_id;
+    },
+
+
     update_moderator_status(state, moderator_status){
       state.moderator_status = moderator_status
     },
@@ -124,6 +134,27 @@ export default new Vuex.Store({
       state.userdetails_status = boolean;
 
     },
+
+    editor(state,boolean){
+      state.editor = boolean;
+    },
+
+    update_pages(state,pages){
+      state.pages = pages;
+    },
+
+    increment_page(state){
+      state.page++;
+    },
+
+    decrement_page(state){
+      state.page--;
+    }, 
+
+    update_moderator_status(state,boolean){
+      state.moderator_status = boolean;
+    }
+
 
 
 

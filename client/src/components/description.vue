@@ -81,9 +81,10 @@ methods: {
   padding-bottom:3%;
   text-overflow: ellipsis;
   padding-left: 30px;
-  padding-right: 5px;
   padding-top: 0%;
   margin-top: -10px;
+  position: fixed;
+  right: 0px;
 }
 
 

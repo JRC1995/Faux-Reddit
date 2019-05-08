@@ -1,5 +1,16 @@
 <template>
   <div class="app">
+
+    <div class="outer_form" v-if="this.$store.state.editor==true">
+      <div class="editor">
+        <form>
+        <ckeditor :editor="editor" v-model="body" :config="editorConfig"></ckeditor>
+        <button class="button_style" style="margin-top:10px;" v-on:click="create_comment">Create</button>
+        </form>
+      </div>
+    </div>
+
+
     <table style="width:100%">
         <tr>
           <td style="vertical-align: middle;">
@@ -16,7 +27,11 @@
               </div>
               <br>
               <div class="thread_body">
-                {{this.$store.state.selected_comment.body}}
+                <span v-html="this.$store.state.selected_comment.body"></span><br>
+                <button class="button_style" style="margin-top:20px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor($store.state.selected_comment._id)">Reply</button>
+                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="this.$store.state.moderator_status==true">
+                  Delete
+                </button>
               </div>
               <br>
             </div>
@@ -43,12 +58,12 @@
               </div>
               <br>
               <div class="thread_body">
-                {{subcomment.body}}
+                <span v-html="subcomment.body" v-if="subcomment.removed==0"></span>
               </div>
               <br>
-              <button class="comment_button">Reply</button>
+              <button class="comment_button" v-if="$store.state.logged_in==true" v-on:click="open_editor(subcomment._id)">Reply</button>
               <button class="comment_button" v-on:click="show_subcomments(subcomment)">Load Replies</button>
-              <button class="comment_button" v-if="subcomment.removed==0">Delete</button>
+              <button class="comment_button" v-if="$store.state.moderator_status==true">Delete</button>
             </div>
           </td>
         </tr>
@@ -61,6 +76,7 @@
 <script>
 import axios from 'axios';
 import moment from 'moment';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 export default {
   name: "Comments",
@@ -71,6 +87,13 @@ export default {
 
 data(){
   return{
+    editor: ClassicEditor,
+    body: '',
+    editorConfig: {
+      // The configuration of the editor.
+      placeholder: "Enter comment here."
+    },
+    parent_id: null
 
   }
 
@@ -137,6 +160,40 @@ methods: {
   },
   upvote(){
     console.log("Abdcd");
+  },
+  open_editor(parent_id){
+    this.parent_id = parent_id;
+    this.body = "";
+    this.$store.commit('flip_blur')
+    this.$store.commit('editor',true)
+  },
+
+  create_comment(){
+    var body = this.body.substring(3,this.body.length-4)
+
+    axios.get('http://localhost:5000/create_comment',{
+      params: {
+           body: body,
+           parent_id: this.parent_id,
+           username: this.$store.state.username,
+      }
+    }).then((response) => {
+      if (response == "unsuccessful"){
+        alert("Something went wrong! Try again, perhaps?");
+      }
+      else{
+
+        axios.get('http://localhost:5000/subcomments',{
+          params: {
+            comment_id: this.$store.state.selected_comment._id
+          }
+        }).then((response) => {
+            this.$store.state.subcomments = response.data;
+            this.$store.commit('editor',false);
+            this.$store.commit('flip_blur');
+          })
+      }
+    })
   }
 
 }
@@ -292,6 +349,51 @@ img.vote_image:hover {
   text-decoration: underline;
 
 }
+
+.outer_form{
+  padding-left: 66.3%;
+  display: inline-block;
+}
+
+.editor{
+  opacity: 1;
+  width: 600px;
+  z-index: 1005;
+  display: inline-block;
+  background-color: white;
+  position: fixed;
+  padding: 30px;
+  border-radius: 10px;
+  margin-top: 1%;
+  margin-left: -310px;
+  box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
+}
+
+
+
+
+.button_style{
+  border-radius: 5px;
+  display: inline-block;
+  color: white;
+  cursor: pointer;
+  border: none;
+  text-overflow: ellipsis;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  background-color:#3676e8;
+  transition: all 0.5s;
+  font-size: 13px;
+  padding: 7px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.button_style:hover {
+  background-color:  #6496EE;
+}
+
 
 /*table, th, td {
   border: 1px solid black;

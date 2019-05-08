@@ -58,7 +58,7 @@ app.get('/frontpage_threads',(req,res)=>{
   let sql = 'SELECT * \
              FROM thread t JOIN user_details u ON u.user_id = t.user_id \
              WHERE removed=0 '+sql_component+'\
-             ORDER BY CAST(t.created_utc/(360*24) AS INT) DESC, t.score DESC \
+             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC \
              LIMIT 100';
 
   db.query({
@@ -82,7 +82,7 @@ app.get('/frontpage_threads',(req,res)=>{
 app.get('/authenticate',(req, res)=>{
   user_name = req.query.user_name;
 
-  let sql = 'SELECT password FROM user_details WHERE user_name = ?;';
+  let sql = 'SELECT user_id, password FROM user_details WHERE user_name = ?;';
   db.query({
     sql: sql,
     timeout: 40000,
@@ -131,6 +131,104 @@ app.get('/userdetails',(req,res)=>{
     sql: sql,
     timeout: 40000, // 40s
     values: [username],
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    res.send(results);
+  });
+});
+
+// RETRIEVE MODERATOR STATUS FOR A USER AND SUBFORUM
+
+app.get('/moderator_status',(req, res)=>{
+
+  user_id = req.query.user_id;
+  subforum_id = req.query.subforum_id;
+
+  console.log(user_id)
+  console.log(subforum_id)
+
+  let sql = 'SELECT * FROM moderates WHERE user_id = ? AND subforum_id = ?;';
+  db.query({
+    sql: sql,
+    timeout: 40000,
+    values: [user_id,subforum_id]
+  }, function(error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    console.log("wait for it");
+    console.log(results);
+    if(results.length!=0){
+      console.log(true)
+      res.send(true);
+    }
+    else{
+      res.send(false);
+    }
+  });
+});
+
+// RETRIEVE ALL SUBCATEGORIES FOR POST CREATION
+
+app.get('/all_subcategories',(req,res)=>{
+
+  let sql = 'SELECT subforum_id, name FROM subforum';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+    res.send(results);
+  });
+});
+
+// RETRIEVE USER DETAILS FOR LOGIN AUTHENTICATION
+
+app.get('/delete_thread',(req, res)=>{
+  thread_id = req.query.thread_id;
+
+  let sql = 'UPDATE thread SET removed=1 WHERE thread_id = ?;';
+  db.query({
+    sql: sql,
+    timeout: 40000,
+    values: [thread_id]
+  }, function(error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      res.send("unsuccessful");
+      return;
+    }
+    else{
+      res.send("success");
+    }
+  });
+});
+
+// INSERT POST
+
+app.get('/create_post',(req,res)=>{
+
+  subforum_id = req.query.subforum_id;
+  body = req.query.body;
+  title = req.query.title;
+  user_id = req.query.user_id;
+
+
+  let sql = 'INSERT into thread (title,body,user_id,created_utc,score,subforum_id,removed) \
+             VALUES (?,?,?,UNIX_TIMESTAMP(),1,?,0)';
+
+  db.query({
+    sql: sql,
+    timeout: 40000,
+    values: [title,body,user_id,subforum_id]
   }, function (error, results, fields) {
     if (error) {
       console.error('error connecting: ' + error.stack);
@@ -198,7 +296,7 @@ app.get('/description',(req,res)=>{
       console.error('error connecting: ' + error.stack);
       return;
     }
-    console.log(results)
+
     res.send(results);
   });
 });
@@ -230,7 +328,6 @@ app.get('/comments',(req,res)=>{
 app.get('/comments',(req,res)=>{
 
   thread_id = req.query.thread_id;
-  console.log(thread_id)
 
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
@@ -247,7 +344,6 @@ app.get('/comments',(req,res)=>{
         {
           output = result.child;
         }
-        console.log(output);
         db.close();
         res.send(output);
       });
@@ -273,9 +369,42 @@ app.get('/subcomments',(req,res)=>{
         {
           output = result.child;
         }
-        console.log(output);
         db.close();
         res.send(output);
+      });
+  });
+});
+
+app.get('/create_comment',(req,res)=>{
+
+  body = req.query.body;
+  parent_id = req.query.parent_id;
+  username = req.query.username;
+  timestamp = Math.floor(Date.now() / 1000);
+
+  unique_id = '_' + Math.random().toString(36).substr(2, 9)
+
+  to_insert = {_id: unique_id,body: body,score:1, user_name: username, removed: 0, created_utc:timestamp}
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").updateOne(
+      {_id: parent_id},
+      { $push: { child: to_insert }},
+      { upsert: true },
+      function(err, result) {
+        if (err) {
+          res.send("unsuccessful");
+          throw err;
+        }
+        else{
+          res.send("success");
+        }
+        db.close();
       });
   });
 });
