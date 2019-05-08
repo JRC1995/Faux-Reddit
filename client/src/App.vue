@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <Header />
+    <!--Login /-->
     <Posts v-if="this.$store.state.comment_state==false"/>
     <Comments v-else-if="this.$store.state.subcomment_state==false"/>
     <Subcomments v-else/>
@@ -16,6 +17,7 @@ import Categories from './components/categories';
 import Comments from './components/comments';
 import Subcomments from './components/subcomments';
 import Description from './components/description';
+import Login from './components/login';
 
 
 export default {
@@ -26,7 +28,8 @@ export default {
     Comments,
     Subcomments,
     Categories,
-    Description
+    Description,
+    Login
   },
 
 }
@@ -45,6 +48,11 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
+}
+
+.ck-editor__editable_inline {
+    min-height: 250px !important;
+    font-size: 15px;
 }
 
 
