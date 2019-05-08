@@ -94,6 +94,7 @@ methods: {
   },
   voting(thread_id, sentiment){
     //if backend sentiment is equal to new sentiment, set sentiment to 0
+    //w
     console.log(this.$store.state.username, thread_id, sentiment);
   }
 }
