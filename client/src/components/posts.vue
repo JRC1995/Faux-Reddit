@@ -163,10 +163,77 @@ methods: {
     }
   },
   voting(thread_id, sentiment){
-    //if backend sentiment is equal to new sentiment, set sentiment to 0
-    //w
+    //if backend sentiment is equal to new sentiment, set sentiment to 0\
     console.log(this.$store.state.username, thread_id, sentiment);
+
+    axios.get('http://localhost:5000/get_thread_vote', {
+      params: {
+        user_id: this.$store.state.user_id,
+        thread_id: thread_id
+      }
+    }).then((response) => {
+        //if no vote exists add it
+        
+        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
+        {
+          /*
+          axios.get('http://localhost:5000/create_subscription', {
+            params: {
+              user_id: this.$store.state.user_id,
+              subforum_id: this.$store.state.selected_thread.subforum_id
+            }
+          }).then(response => {
+            alert("Subscribed")
+          })
+          */
+          console.log("yes", sentiment)
+          axios.get('http://localhost:5000/create_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id,
+              sentiment: sentiment
+            }
+          }).then(response => {
+            alert("LIKED")
+          })
+        }
+        else if(this.$store.state.logged_in == true)
+        {
+          this.sentiment = response.data[0].sentiment
+          console.log(this.sentiment)
+          console.log("ASDBASD")
+          //if sentiment is the same delete it
+          if(this.sentiment == sentiment)
+          {
+            axios.get('http://localhost:5000/delete_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id
+            }
+            }).then(response => {
+              alert("DELETED")
+            })
+
+
+          }
+          //else if different update it
+          else
+          {
+            axios.get('http://localhost:5000/update_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id,
+              sentiment: sentiment
+            }
+            }).then(response => {
+              alert("UPDATED")
+    
+            })
+          }
+        }
+    })
   }, 
+
   open_editor(){
     this.subcategory_id = "";
     this.body = "";

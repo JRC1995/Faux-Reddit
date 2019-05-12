@@ -480,6 +480,100 @@ app.get('/delete_subscription',(req, res) =>{
   });
 });
 
+//gets a vote for a given user and thread
+app.get('/get_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+  
+
+  let sql = 'SELECT * \
+             FROM thread_votes \
+             WHERE user_id = ? AND thread_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//creates a vote for a given user and thread
+app.get('/create_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+  sentiment = req.query.sentiment;
+
+  let sql = 'INSERT INTO thread_votes (user_id, thread_id, sentiment) \
+             VALUES (?, ?, ?)';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id, sentiment]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//deletes a vote for a given user and thread
+app.get('/delete_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+
+
+  let sql = 'DELETE FROM thread_votes \
+             WHERE user_id = ? AND thread_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//updates a vote for a given user and thread
+app.get('/update_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+  sentiment = req.query.sentiment
+
+  let sql = 'UPDATE thread_votes \
+             SET sentiment = ? \
+             WHERE user_ID = ? AND thread_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [sentiment, user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
 // ESTABLISH SERVER PORT
 
 const PORT = process.env.PORT || 5000;

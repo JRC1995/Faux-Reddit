@@ -41,7 +41,7 @@ methods: {
       }
     }).then((response) => {
         //this.subforum_ids = response.data[0].subforum_id
-        if(typeof response.data[0] == "undefined")
+        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
         {
           axios.get('http://localhost:5000/create_subscription', {
             params: {
@@ -52,7 +52,7 @@ methods: {
             alert("Subscribed")
           })
         }
-        else
+        else if (this.$store.state.logged_in == true)
         {
          
           axios.get('http://localhost:5000/delete_subscription', {
