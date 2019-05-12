@@ -94,6 +94,7 @@ axios.get('http://localhost:5000/frontpage_threads',{
     var item_no = 6
 
     //format threads
+    //test
     var pages = Math.ceil(threads.length/item_no)
 
     this.$store.commit('update_pages',pages)
@@ -262,6 +263,7 @@ methods: {
     }
 
   }
+}
 }
 </script>
 

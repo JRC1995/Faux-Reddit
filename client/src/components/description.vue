@@ -1,3 +1,4 @@
+
 <template>
   <div class="app">
     <div v-if="this.description!=null">
@@ -32,7 +33,41 @@ axios.get('http://localhost:5000/description',{params:{thread_id:this.$store.sta
 methods: {
   subscribe()
   {
-    console.log(this.$store.state.username, this.$store.state.selected_thread.subforum_id)
+   // console.log(this.$store.state.username, this.$store.state.user_id,   this.$store.state.selected_thread.subforum_id, this.description[0].subforum_name)
+    axios.get('http://localhost:5000/subscriptions', {
+      params: {
+        user_id: this.$store.state.user_id,
+        subforum_id: this.$store.state.selected_thread.subforum_id
+      }
+    }).then((response) => {
+        //this.subforum_ids = response.data[0].subforum_id
+        if(typeof response.data[0] == "undefined")
+        {
+          axios.get('http://localhost:5000/create_subscription', {
+            params: {
+              user_id: this.$store.state.user_id,
+              subforum_id: this.$store.state.selected_thread.subforum_id
+            }
+          }).then(response => {
+            alert("Subscribed")
+          })
+        }
+        else
+        {
+         
+          axios.get('http://localhost:5000/delete_subscription', {
+            params: {
+              user_id: this.$store.state.user_id,
+              subforum_id: this.$store.state.selected_thread.subforum_id
+            }
+          }).then(response => {
+             alert("Unsubscribed")
+          })
+
+        }
+        
+        //console.log(response.data[0].description, this.subforum_ids)
+    })
   }
 }
 

@@ -409,6 +409,76 @@ app.get('/create_comment',(req,res)=>{
   });
 });
 
+//grab subscriptions for a given user 
+app.get('/subscriptions',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+  
+
+  let sql = 'SELECT * \
+             FROM subscribes as sub \
+             JOIN subforum ON subforum.subforum_id = sub.subforum_id \
+             WHERE sub.user_id = ? AND sub.subforum_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//create a subscription for a given user and given forum
+app.get('/create_subscription',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+  
+
+  let sql = 'INSERT INTO subscribes (user_id, subforum_id) \
+             VALUES (?, ?)';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//deletes a subscription for a given user
+app.get('/delete_subscription',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+  
+
+  let sql = 'DELETE FROM subscribes \
+             WHERE user_id = ? AND subforum_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
 
 // ESTABLISH SERVER PORT
 
