@@ -90,7 +90,7 @@ app.get('/authenticate',(req, res)=>{
   db.query({
     sql: sql,
     timeout: 40000,
-    values: [user_name]
+    values: [user_name.toLowerCase()]
   }, function(error, results, fields) {
     if (error) {
       console.error('error connecting: ' + error.stack);
@@ -113,7 +113,7 @@ app.get('/signup',(req,res)=>{
   db.query({
     sql: sql,
     timeout: 40000, // 40s
-    values: [username, email, password],
+    values: [username.toLowerCase(), email, password],
   }, function (error, results, fields) {
     if (error) {
       console.error('error connecting: ' + error.stack);
@@ -134,7 +134,7 @@ app.get('/userdetails',(req,res)=>{
   db.query({
     sql: sql,
     timeout: 40000, // 40s
-    values: [username],
+    values: [username.toLowerCase()],
   }, function (error, results, fields) {
     if (error) {
       console.error('error connecting: ' + error.stack);
@@ -218,9 +218,6 @@ app.get('/delete_comments',(req, res)=>{
   comment_id = req.query.comment_id;
   parent_id = req.query.parent_id;
 
-  console.log(comment_id)
-  console.log(parent_id)
-
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
@@ -232,8 +229,6 @@ app.get('/delete_comments',(req, res)=>{
       { $set: { 'child.$.removed': 1 }},
       {},
       function(err, result) {
-        console.log(result)
-        console.log(err)
         if (err) {
           res.send("unsuccessful");
           throw err;
@@ -548,29 +543,58 @@ app.get('/create_comment_vote',(req, res) =>{
     var MongoClient = mongoDB.MongoClient;
     var url = "mongodb://localhost/";
 
-    console.log(parent_id, comment_id, comment_score)
-    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db.db("proto_reddit");
+      var dbo = db_.db("proto_reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)+parseInt(sentiment) }},
         {},
         function(err, result) {
-          console.log(result)
-          console.log(err)
           if (err) {
             res.send("unsuccessful");
             throw err;
           }
           else{
-            res.send("success");
+            MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
+            if (err) throw err;
+            var dbo_ = db__.db("proto_reddit");
+            dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
+            function(err, result) {
+              console.log(result)
+              if (err) {
+                res.send("unsuccessful");
+                throw err;
+              }
+              else{
+
+                let sql = "UPDATE user_details SET karma = karma + ? WHERE user_name = ?";
+
+                user_name = result[0].child.user_name
+
+                db.query({
+                  sql: sql,
+                  timeout: 40000, // 40s
+                  values: [parseInt(sentiment),user_name.toLowerCase()]
+                }, function (error, results, fields) {
+                  if (error) {
+                    console.error('error connecting: ' + error.stack);
+                    return;
+                  }
+                  console.log(results)
+
+                  res.send("success");
+                });
+              }
+            });
+          });
           }
-          db.close();
         });
+        db_.close();
+      });
+
     });
-  });
-});
+ });
 
 //delete a comment vote for a given user_id and comment_id
 app.get('/delete_comment_vote',(req, res) =>{
@@ -596,27 +620,54 @@ app.get('/delete_comment_vote',(req, res) =>{
     var MongoClient = mongoDB.MongoClient;
     var url = "mongodb://localhost/";
 
-    console.log(parent_id, comment_id, comment_score)
-    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db.db("proto_reddit");
+      var dbo = db_.db("proto_reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)-parseInt(sentiment) }},
         {},
         function(err, result) {
-          console.log(result)
-          console.log(err)
           if (err) {
             res.send("unsuccessful");
             throw err;
           }
           else{
-            res.send("success");
+            MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
+            if (err) throw err;
+            var dbo_ = db__.db("proto_reddit");
+            dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
+            function(err, result) {
+              console.log(result)
+              if (err) {
+                res.send("unsuccessful");
+                throw err;
+              }
+              else{
+
+                let sql = 'UPDATE user_details SET karma = karma - ? WHERE user_name = ?';
+
+                user_name = result[0].child.user_name
+
+                db.query({
+                  sql: sql,
+                  timeout: 40000, // 40s
+                  values: [parseInt(sentiment),user_name.toLowerCase()]
+                }, function (error, results, fields) {
+                  if (error) {
+                    console.error('error connecting: ' + error.stack);
+                    return;
+                  }
+
+                  res.send("success");
+                });
+              }
+            });
+          });
           }
-          db.close();
         });
-    });
+        db_.close();
+      });
   });
 });
 
@@ -645,27 +696,54 @@ app.get('/update_comment_vote',(req, res) =>{
     var MongoClient = mongoDB.MongoClient;
     var url = "mongodb://localhost/";
 
-    console.log(parent_id, comment_id, comment_score)
-    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db.db("proto_reddit");
+      var dbo = db_.db("proto_reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)+2*parseInt(sentiment) }},
         {},
         function(err, result) {
-          console.log(result)
-          console.log(err)
           if (err) {
             res.send("unsuccessful");
             throw err;
           }
           else{
-            res.send("success");
+            MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
+            if (err) throw err;
+            var dbo_ = db__.db("proto_reddit");
+            dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
+            function(err, result) {
+              console.log(result)
+              if (err) {
+                res.send("unsuccessful");
+                throw err;
+              }
+              else{
+
+                let sql = 'UPDATE user_details SET karma = karma + ? WHERE user_name = ?';
+
+                user_name = result[0].child.user_name
+
+                db.query({
+                  sql: sql,
+                  timeout: 40000, // 40s
+                  values: [2*parseInt(sentiment),user_name.toLowerCase()]
+                }, function (error, results, fields) {
+                  if (error) {
+                    console.error('error connecting: ' + error.stack);
+                    return;
+                  }
+
+                  res.send("success");
+                });
+              }
+            });
+          });
           }
-          db.close();
         });
-    });
+        db_.close();
+      });
   });
 });
 
@@ -752,7 +830,9 @@ app.get('/create_comment',(req,res)=>{
 
   unique_id = '_' + Math.random().toString(36).substr(2, 9)
 
-  to_insert = {_id: unique_id,body: body,score:1, user_name: username, removed: 0, created_utc:timestamp}
+
+  to_insert = {_id: unique_id,body: body,score:1, user_name: username.toLowerCase(), removed: 0, created_utc:timestamp}
+
 
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
