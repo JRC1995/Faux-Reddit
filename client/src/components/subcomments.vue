@@ -30,7 +30,7 @@
                 <span v-html="this.$store.state.selected_comment.body" v-if="this.$store.state.selected_comment.removed==0"></span>
                 <span v-else style="color:red;font-size:13px">[ REMOVED ]</span><br>
                 <button class="button_style" style="margin-top:20px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor($store.state.selected_comment._id)">Reply</button>
-                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="$store.state.moderator_status==true && $store.state.selected_comment.removed==0" v-on:click="delete_comment($store.state.subcomment_parent_id,$store.state.selected_comment._id,'parent')">Delete</button>
+                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="($store.state.moderator_status==true || $store.state.selected_comment.user_name==$store.state.username) && $store.state.selected_comment.removed==0" v-on:click="delete_comment($store.state.subcomment_parent_id,$store.state.selected_comment._id,'parent')">Delete</button>
               </div>
               <br>
             </div>
@@ -63,7 +63,7 @@
               <br>
               <button class="comment_button" v-if="$store.state.logged_in==true" v-on:click="open_editor(subcomment._id)">Reply</button>
               <button class="comment_button" v-on:click="show_subcomments(subcomment)">Load Replies</button>
-              <button class="comment_button" v-if="$store.state.moderator_status==true && subcomment.removed==0" v-on:click="delete_comment($store.state.selected_comment._id,subcomment._id,'comment')">Delete</button>
+              <button class="comment_button" v-if="($store.state.moderator_status==true || subcomment.user_name==$store.state.username) && subcomment.removed==0" v-on:click="delete_comment($store.state.selected_comment._id,subcomment._id,'comment')">Delete</button>
             </div>
           </td>
         </tr>

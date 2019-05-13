@@ -39,7 +39,7 @@
                 <button class="button_style" style="margin-top:20px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor(thread.thread_id,'post')">
                   Reply
                 </button>
-                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="this.$store.state.moderator_status==true && thread.removed==0" v-on:click="delete_thread()">
+                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="(this.$store.state.moderator_status==true || thread.user_id==this.$store.state.user_id) && thread.removed==0" v-on:click="delete_thread()">
                   Delete
                 </button>
               </div>
@@ -80,7 +80,7 @@
               <br>
               <button class="comment_button" v-if="$store.state.logged_in==true" v-on:click="open_editor(comment._id,'comment')">Reply</button>
               <button class="comment_button" v-on:click="show_subcomments(comment)">Load Replies</button>
-              <button class="comment_button" v-if="$store.state.moderator_status==true && comment.removed==0" v-on:click="delete_comment(comment._id)">Delete</button>
+              <button class="comment_button" v-if="($store.state.moderator_status==true || comment.user_name==$store.state.username) && comment.removed==0" v-on:click="delete_comment(comment._id)">Delete</button>
             </div>
           </td>
 
@@ -120,7 +120,6 @@ data(){
      },
      parent_id: null,
      thread_deleted: false
-
   }
 
 },
@@ -590,6 +589,7 @@ methods: {
         var message = response.data;
         if (message == "success")
         {this.thread_deleted = true;
+          this.thread.removed=1;
           Swal.fire({
                       type: 'success',
                       title: "Thread Deleted",
