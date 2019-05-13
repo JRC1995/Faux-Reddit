@@ -4,7 +4,7 @@
 
     <div class="outer_form" v-if="this.$store.state.editor==true">
       <div class="editor">
-        <form>
+        <form  v-on:submit.prevent>
         <ckeditor :editor="editor" v-model="body" :config="editorConfig"></ckeditor>
         <button class="button_style" style="margin-top:10px;" v-on:click="create_comment">Create</button>
         </form>
@@ -16,9 +16,9 @@
 
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote" v-on:click="voting_thread(thread.thread_id, 1)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20" v-on:click="voting_thread(thread.thread_id,1)"></button>
               <br><b>{{format_score(this.thread.score)}}</b><br>
-              <button class="vote" v-on:click="voting_thread(thread.thread_id, -1)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20" v-on:click="voting_thread(thread.thread_id,-1)"></button>
             </div>
           </td>
 
@@ -39,7 +39,7 @@
                 <button class="button_style" style="margin-top:20px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor(thread.thread_id,'post')">
                   Reply
                 </button>
-                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="this.$store.state.moderator_status==true" v-on:click="delete_thread()">
+                <button class="button_style" style="margin-top:20px;margin-left:10px;" v-if="this.$store.state.moderator_status==true && thread.removed==0" v-on:click="delete_thread()">
                   Delete
                 </button>
               </div>
@@ -61,9 +61,9 @@
 
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote" v-on:click="voting_comment(thread.thread_id, 0, comment._id, 1, comment.score)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote"><img class="vote_image" v-on:click="voting_comment(comment._id,1,comment.score)" src="../assets/like.png" height="20" width="20"></button>
               <br><b>{{format_score(comment.score)}}</b><br>
-              <button class="vote" v-on:click="voting_comment(thread.thread_id, 0, comment._id, -1, comment.score)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote"><img  class="vote_image" v-on:click="voting_comment(comment._id,-1,comment.score)" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
 
@@ -75,11 +75,12 @@
               <br>
               <div class="thread_body">
                 <span v-html="comment.body" v-if="comment.removed==0"></span>
+                <span v-else style="color:red;font-size:13px">[ REMOVED ]</span>
               </div>
               <br>
               <button class="comment_button" v-if="$store.state.logged_in==true" v-on:click="open_editor(comment._id,'comment')">Reply</button>
               <button class="comment_button" v-on:click="show_subcomments(comment)">Load Replies</button>
-              <button class="comment_button" v-if="$store.state.moderator_status==true">Delete</button>
+              <button class="comment_button" v-if="$store.state.moderator_status==true && comment.removed==0" v-on:click="delete_comment(comment._id)">Delete</button>
             </div>
           </td>
 
@@ -97,6 +98,7 @@
 import axios from 'axios';
 import moment from 'moment';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import Swal from 'sweetalert2'
 
 export default {
   name: "Comments",
@@ -117,8 +119,7 @@ data(){
        placeholder: "Enter comment here."
      },
      parent_id: null,
-     thread_deleted: false,
-     comment_deleted: false
+     thread_deleted: false
 
   }
 
@@ -158,14 +159,338 @@ methods: {
     return formatted
   },
 
+  update_mount(){
+    axios.get('http://localhost:5000/comments',{
+      params: {
+        thread_id: this.thread.thread_id
+      }
+    }).then((response) => {
+        this.comments = response.data
+      })
+  },
+
+  voting_thread(thread_id, sentiment){
+  //if backend sentiment is equal to new sentiment, set sentiment to 0
+  //w
+  //if backend sentiment is equal to new sentiment, delete sentiment\
+    console.log(this.$store.state.username, thread_id, sentiment);
+
+    if (this.$store.state.logged_in == true){
+        axios.get('http://localhost:5000/get_thread_vote', {
+          params: {
+            user_id: this.$store.state.user_id,
+            thread_id: thread_id
+          }
+        }).then((response) => {
+            //if no vote exists add it
+
+            if(typeof response.data[0] == "undefined")
+            {
+              console.log("yes", sentiment)
+              axios.get('http://localhost:5000/create_thread_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  thread_id: thread_id,
+                  sentiment: sentiment
+                }
+              }).then(response => {
+
+                if (sentiment==1)
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Upvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                else
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Downvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                this.$store.state.selected_thread.score += sentiment
+              })
+            }
+            else
+            {
+              this.sentiment = response.data[0].sentiment
+
+              //if sentiment is the same delete it
+              if(this.sentiment == sentiment)
+              {
+                if (sentiment == 1)
+                {
+                  var message = "You have already upvoted this thread. Upvoting again will revoke your upvote. Do you want to proceed?"
+                }
+                else
+                {
+                  var message = "You have already downvoted this thread. Downvoting again will revoke your downvote. Do you want to proceed?"
+                }
+                Swal.fire({ title: 'Are you sure?',
+                            text: message,
+                            type: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3676e8',
+                            cancelButtonColor: '#B2B8BF',
+                            confirmButtonText: 'Proceed'
+                          }).then((result) => {
+                            if (result.value) {
+                              axios.get('http://localhost:5000/delete_thread_vote', {
+                              params: {
+                                user_id: this.$store.state.user_id,
+                                thread_id: thread_id
+                              }
+                              }).then(response => {
+                                if (sentiment==1)
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Upvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                else
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Downvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                this.$store.state.selected_thread.score -= sentiment;
+                              })
+
+                            }
+                          })
+
+              }
+              //else if different update it
+              else
+              {
+                axios.get('http://localhost:5000/update_thread_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  thread_id: thread_id,
+                  sentiment: sentiment
+                }
+                }).then(response => {
+                  if (sentiment==1)
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Upvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  else
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Downvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  this.$store.state.selected_thread.score += 2*sentiment;
+                })
+              }
+            }
+        })
+    }
+    else{
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: "You must log in to vote!",
+                  focusConfirm: false,
+                  confirmButtonColor: '#3676e8',
+                })
+    }
+  },
+
+
+  voting_comment(comment_id, sentiment, comment_score){
+
+    var parent_id = "t"+this.$store.state.selected_thread.thread_id;
+
+    if (this.$store.state.logged_in == true){
+        axios.get('http://localhost:5000/get_comment_vote', {
+          params: {
+            user_id: this.$store.state.user_id,
+            comment_id: comment_id
+          }
+        }).then((response) => {
+            //if no vote exists add it
+
+            if(typeof response.data[0] == "undefined")
+            {
+              console.log("yes", sentiment)
+              axios.get('http://localhost:5000/create_comment_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  comment_id: comment_id,
+                  sentiment: sentiment,
+                  parent_id: parent_id,
+                  comment_score: comment_score
+                }
+              }).then(response => {
+
+                if (sentiment==1)
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Upvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                else
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Downvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                this.update_mount()
+              })
+            }
+            else
+            {
+              this.sentiment = response.data[0].sentiment
+
+              //if sentiment is the same delete it
+              if(this.sentiment == sentiment)
+              {
+                if (sentiment == 1)
+                {
+                  var message = "You have already upvoted this comment. Upvoting again will revoke your upvote. Do you want to proceed?"
+                }
+                else
+                {
+                  var message = "You have already downvoted this comment. Downvoting again will revoke your downvote. Do you want to proceed?"
+                }
+                Swal.fire({ title: 'Are you sure?',
+                            text: message,
+                            type: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3676e8',
+                            cancelButtonColor: '#B2B8BF',
+                            confirmButtonText: 'Proceed'
+                          }).then((result) => {
+                            if (result.value) {
+                              axios.get('http://localhost:5000/delete_comment_vote', {
+                              params: {
+                                user_id: this.$store.state.user_id,
+                                comment_id: comment_id,
+                                parent_id: parent_id,
+                                sentiment: sentiment,
+                                comment_score: comment_score
+                              }
+                              }).then(response => {
+                                if (sentiment==1)
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Upvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                else
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Downvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                this.update_mount();
+                              })
+
+                            }
+                          })
+
+              }
+              //else if different update it
+              else
+              {
+                axios.get('http://localhost:5000/update_comment_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  comment_id: comment_id,
+                  sentiment: sentiment,
+                  parent_id: parent_id,
+                  comment_score: comment_score
+                }
+                }).then(response => {
+                  if (sentiment==1)
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Upvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  else
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Downvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  this.update_mount();
+                })
+              }
+            }
+        })
+    }
+    else{
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: "You must log in to vote!",
+                  focusConfirm: false,
+                  confirmButtonColor: '#3676e8',
+                })
+    }
+  },
+
   show_subcomments(comment){
     var current_states = {comment_state: this.$store.state.comment_state,
                       selected_thread: this.$store.state.selected_thread,
                       subcomment_state: this.$store.state.subcomment_state,
                       selected_comment: this.$store.state.selected_comment,
-                      subcomments: this.$store.state.subcomments};
+                      subcomments: this.$store.state.subcomments,
+                      subcomments_parent_id: this.$store.state.subcomment_parent_id};
     this.$store.commit('update_history',current_states);
     this.$store.commit('change_subcomment_state_to_true');
+    this.$store.commit('update_subcomment_parent_id',"t"+this.thread.thread_id);
     console.log(this.$store.state.subcomment_state);
     this.$store.commit('select_comment',comment);
     console.log(this.$store.state.selected_subcomment);
@@ -253,205 +578,29 @@ methods: {
       })
   },
 
-  voting_thread(thread_id, sentiment)
-  {
-    console.log(this.$store.state.username, thread_id, sentiment);
-    axios.get('http://localhost:5000/get_thread_vote', {
+  delete_comment(comment_id){
+
+    axios.get('http://localhost:5000/delete_comments',{
       params: {
-        user_id: this.$store.state.user_id,
-        thread_id: thread_id
+        parent_id: 't'+String(this.thread.thread_id),
+        comment_id: comment_id
       }
     }).then((response) => {
-        //if no vote exists add it
-        
-        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
-        {
-          /*
-          axios.get('http://localhost:5000/create_subscription', {
-            params: {
-              user_id: this.$store.state.user_id,
-              subforum_id: this.$store.state.selected_thread.subforum_id
-            }
-          }).then(response => {
-            alert("Subscribed")
-          })
-          */
-          console.log("yes", sentiment)
-          axios.get('http://localhost:5000/create_thread_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id,
-              sentiment: sentiment
-            }
-          }).then(response => {
-            if(sentiment == 1)
-            {
-              alert("LIKED")
-            }
-            else
-            {
-              alert("DISLIKED")
-            }
-          })
-        }
-        else if(this.$store.state.logged_in == true)
-        {
-          this.sentiment = response.data[0].sentiment
-          console.log(this.sentiment)
-          console.log("ASDBASD")
-          //if sentiment is the same delete it
-          if(this.sentiment == sentiment)
-          {
-            axios.get('http://localhost:5000/delete_thread_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id
-            }
-            }).then(response => {
-              alert("VOTE DELETED")
-            })
 
-
-          }
-          //else if different update it
-          else
-          {
-            axios.get('http://localhost:5000/update_thread_vote', {
+        var message = response.data;
+        if (message == "success")
+        {
+          axios.get('http://localhost:5000/comments',{
             params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id,
-              sentiment: sentiment
+              thread_id: this.thread.thread_id
             }
-            }).then(response => {
-              alert("VOTE UPDATED")
-    
+          }).then((response) => {
+              this.comments = response.data
             })
-          }
         }
-    })
+        else alert("Something went wrong! Try again, perhaps?");
+      })
   },
-
-  voting_comment(thread_id, parent_id, comment_id, sentiment, comment_score)
-  {
-    
-    comment_id = parseInt(comment_id);
-    //parent/origin comments always have a parent_id of 0
-    console.log(thread_id, parent_id, comment_id, sentiment, comment_score);
-    
-    console.log(comment_score)
-    axios.get('http://localhost:5000/get_comment_vote', {
-    params: {
-      user_id: this.$store.state.user_id,
-      comment_id: comment_id
-      }
-    }).then(response => {
-      alert("YEAP")
-      //need to check if comment vote exists in sql first
-      //then do mongo updates
-      
-
-      if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
-      {
-        //create the comment vote in sql
-        axios.get('http://localhost:5000/create_comment_vote', {
-        params: {
-          user_id: this.$store.state.user_id,
-          comment_id: comment_id,
-          sentiment: sentiment
-        }
-        }).then(response => {
-          alert("COMMENT VOTE CREATED")
-        });
-
-        comment_score = parseInt(comment_score)
-        comment_score = comment_score + sentiment
-
-        //then update the value in mongo
-        axios.get('http://localhost:5000/mongo_update_comment_vote', {
-        params: {
-          parent_id: 't'+thread_id,
-          comment_id: comment_id,
-          comment_score: comment_score
-        }
-        }).then(response => {
-          alert("COMMENT VOTE SCORE UPDATED FOR CREATION")
-          console.log(response)
-        });
-        
-      }
-      //else if the comment vote already exists
-      //delete record from sql
-      //set mongodb record to new score
-      else if(this.$store.state.logged_in == true)
-      {
-        var retrivedSentiment = response.data[0].sentiment
-
-        console.log(retrivedSentiment, sentiment)
-        if(retrivedSentiment == sentiment)
-        {
-          axios.get('http://localhost:5000/delete_comment_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              comment_id: comment_id
-            }
-            }).then(response => {
-              alert("COMMENT VOTE DELETED")
-            });
-
-            comment_score = parseInt(comment_score)
-            comment_score = comment_score - sentiment
-
-            axios.get('http://localhost:5000/mongo_update_comment_vote', {
-            params: {
-              parent_id: 't'+thread_id,
-              comment_id: comment_id,
-              comment_score: comment_score
-            }
-            }).then(response => {
-              alert("COMMENT VOTE DELETION SCORE UPDATED")
-              console.log(response)
-            });
-
-        }
-        //else sentiment user provides is different than what is stored
-        //update record in sql
-        //update score in mongodb
-        else
-        {
-          console.log('update')
-          
-          comment_score = parseInt(comment_score)
-          console.log(comment_score)
-          comment_score = comment_score + (2 * sentiment)
-          console.log(comment_score)
-
-          axios.get('http://localhost:5000/update_comment_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              comment_id: comment_id,
-              sentiment: sentiment
-            }
-            }).then(response => {
-              alert("COMMENT VOTE UPDATED")
-            });
-
-            axios.get('http://localhost:5000/mongo_update_comment_vote', {
-            params: {
-              parent_id: 't'+thread_id,
-              comment_id: comment_id,
-              comment_score: comment_score
-            }
-            }).then(response => {
-              alert("COMMENT VOTE UPDATE SCORE UPDATED")
-              console.log(response)
-            });
-        }
-      }
-    });
-
-    
-
-  }
 
  }
 }
