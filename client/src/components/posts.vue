@@ -194,7 +194,14 @@ methods: {
               sentiment: sentiment
             }
           }).then(response => {
-            alert("LIKED")
+            if(sentiment == 1)
+            {
+              alert("LIKED")
+            }
+            else
+            {
+              alert("DISLIKED")
+            }
           })
         }
         else if(this.$store.state.logged_in == true)
@@ -211,7 +218,7 @@ methods: {
               thread_id: thread_id
             }
             }).then(response => {
-              alert("DELETED")
+              alert("VOTE DELETED")
             })
 
 
@@ -226,7 +233,7 @@ methods: {
               sentiment: sentiment
             }
             }).then(response => {
-              alert("UPDATED")
+              alert("VOTE UPDATED")
     
             })
           }

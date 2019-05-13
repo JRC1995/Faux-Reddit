@@ -16,9 +16,9 @@
 
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting_thread(thread.thread_id, 1)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
               <br><b>{{format_score(this.thread.score)}}</b><br>
-              <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting_thread(thread.thread_id, -1)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
 
@@ -61,9 +61,9 @@
 
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting_comment(thread.thread_id, 0, comment._id, 1, comment.score)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
               <br><b>{{format_score(comment.score)}}</b><br>
-              <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote" v-on:click="voting_comment(thread.thread_id, 0, comment._id, -1, comment.score)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
             </div>
           </td>
 
@@ -251,7 +251,208 @@ methods: {
         if (message == "success") this.thread_deleted = true;
         else alert("Something went wrong! Try again, perhaps?");
       })
+  },
+
+  voting_thread(thread_id, sentiment)
+  {
+    console.log(this.$store.state.username, thread_id, sentiment);
+    axios.get('http://localhost:5000/get_thread_vote', {
+      params: {
+        user_id: this.$store.state.user_id,
+        thread_id: thread_id
+      }
+    }).then((response) => {
+        //if no vote exists add it
+        
+        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
+        {
+          /*
+          axios.get('http://localhost:5000/create_subscription', {
+            params: {
+              user_id: this.$store.state.user_id,
+              subforum_id: this.$store.state.selected_thread.subforum_id
+            }
+          }).then(response => {
+            alert("Subscribed")
+          })
+          */
+          console.log("yes", sentiment)
+          axios.get('http://localhost:5000/create_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id,
+              sentiment: sentiment
+            }
+          }).then(response => {
+            if(sentiment == 1)
+            {
+              alert("LIKED")
+            }
+            else
+            {
+              alert("DISLIKED")
+            }
+          })
+        }
+        else if(this.$store.state.logged_in == true)
+        {
+          this.sentiment = response.data[0].sentiment
+          console.log(this.sentiment)
+          console.log("ASDBASD")
+          //if sentiment is the same delete it
+          if(this.sentiment == sentiment)
+          {
+            axios.get('http://localhost:5000/delete_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id
+            }
+            }).then(response => {
+              alert("VOTE DELETED")
+            })
+
+
+          }
+          //else if different update it
+          else
+          {
+            axios.get('http://localhost:5000/update_thread_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              thread_id: thread_id,
+              sentiment: sentiment
+            }
+            }).then(response => {
+              alert("VOTE UPDATED")
+    
+            })
+          }
+        }
+    })
+  },
+
+  voting_comment(thread_id, parent_id, comment_id, sentiment, comment_score)
+  {
+    
+    comment_id = parseInt(comment_id);
+    //parent/origin comments always have a parent_id of 0
+    console.log(thread_id, parent_id, comment_id, sentiment, comment_score);
+    
+    console.log(comment_score)
+    axios.get('http://localhost:5000/get_comment_vote', {
+    params: {
+      user_id: this.$store.state.user_id,
+      comment_id: comment_id
+      }
+    }).then(response => {
+      alert("YEAP")
+      //need to check if comment vote exists in sql first
+      //then do mongo updates
+      
+
+      if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
+      {
+        //create the comment vote in sql
+        axios.get('http://localhost:5000/create_comment_vote', {
+        params: {
+          user_id: this.$store.state.user_id,
+          comment_id: comment_id,
+          sentiment: sentiment
+        }
+        }).then(response => {
+          alert("COMMENT VOTE CREATED")
+        });
+
+        comment_score = parseInt(comment_score)
+        comment_score = comment_score + sentiment
+
+        //then update the value in mongo
+        axios.get('http://localhost:5000/mongo_update_comment_vote', {
+        params: {
+          parent_id: 't'+thread_id,
+          comment_id: comment_id,
+          comment_score: comment_score
+        }
+        }).then(response => {
+          alert("COMMENT VOTE SCORE UPDATED FOR CREATION")
+          console.log(response)
+        });
+        
+      }
+      //else if the comment vote already exists
+      //delete record from sql
+      //set mongodb record to new score
+      else if(this.$store.state.logged_in == true)
+      {
+        var retrivedSentiment = response.data[0].sentiment
+
+        console.log(retrivedSentiment, sentiment)
+        if(retrivedSentiment == sentiment)
+        {
+          axios.get('http://localhost:5000/delete_comment_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              comment_id: comment_id
+            }
+            }).then(response => {
+              alert("COMMENT VOTE DELETED")
+            });
+
+            comment_score = parseInt(comment_score)
+            comment_score = comment_score - sentiment
+
+            axios.get('http://localhost:5000/mongo_update_comment_vote', {
+            params: {
+              parent_id: 't'+thread_id,
+              comment_id: comment_id,
+              comment_score: comment_score
+            }
+            }).then(response => {
+              alert("COMMENT VOTE DELETION SCORE UPDATED")
+              console.log(response)
+            });
+
+        }
+        //else sentiment user provides is different than what is stored
+        //update record in sql
+        //update score in mongodb
+        else
+        {
+          console.log('update')
+          
+          comment_score = parseInt(comment_score)
+          console.log(comment_score)
+          comment_score = comment_score + (2 * sentiment)
+          console.log(comment_score)
+
+          axios.get('http://localhost:5000/update_comment_vote', {
+            params: {
+              user_id: this.$store.state.user_id,
+              comment_id: comment_id,
+              sentiment: sentiment
+            }
+            }).then(response => {
+              alert("COMMENT VOTE UPDATED")
+            });
+
+            axios.get('http://localhost:5000/mongo_update_comment_vote', {
+            params: {
+              parent_id: 't'+thread_id,
+              comment_id: comment_id,
+              comment_score: comment_score
+            }
+            }).then(response => {
+              alert("COMMENT VOTE UPDATE SCORE UPDATED")
+              console.log(response)
+            });
+        }
+      }
+    });
+
+    
+
   }
+
  }
 }
 </script>

@@ -574,6 +574,132 @@ app.get('/update_thread_vote',(req, res) =>{
   });
 });
 
+//updates a vote for a comment
+app.get('/mongo_update_comment_vote',(req, res) =>{
+  parent_id = req.query.parent_id
+  comment_id = req.query.comment_id
+  comment_score = req.query.comment_score
+
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+  console.log(parent_id, comment_id, comment_score)
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").updateOne(
+      {'_id': parent_id, 'child._id': comment_id},
+      { $set: { 'child.$.score': comment_score }},
+      {},
+      function(err, result) {
+        console.log(result)
+        console.log(err)
+        if (err) {
+          res.send("unsuccessful");
+          throw err;
+        }
+        else{
+          res.send("success");
+        }
+        db.close();
+      });
+  });
+
+});
+
+//returns a vote for a given user_id and comment_id
+app.get('/get_comment_vote',(req, res) =>{
+  user_id = req.query.user_id
+  comment_id = req.query.comment_id;
+
+  let sql = 'SELECT * \
+             FROM comment_votes \
+             WHERE user_id = ? AND comment_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//create a comment vote for a given user_id and comment_id
+app.get('/create_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+  sentiment = req.query.sentiment;
+
+  let sql = 'INSERT INTO comment_votes (user_id, comment_id, sentiment) \
+             VALUES (?, ?, ?)';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id, sentiment]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//delete a comment vote for a given user_id and comment_id
+app.get('/delete_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+
+  let sql = 'DELETE FROM comment_votes \
+             WHERE user_id = ? AND comment_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//update a comment vote for a given user_id and comment_id
+app.get('/update_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+  sentiment = req.query.sentiment;
+
+  let sql = 'UPDATE comment_votes \
+             SET sentiment = ? \
+             WHERE user_ID = ? AND comment_id = ?';
+      
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [sentiment, user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+
 // ESTABLISH SERVER PORT
 
 const PORT = process.env.PORT || 5000;
