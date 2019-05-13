@@ -14,7 +14,8 @@ export default new Vuex.Store({
     selected_thread: null,
     subcomment_state: false,
     selected_comment: null,
-    history: [{comment_state: false,selected_thread: null,subcomment_state: false,selected_comment: null,subcomments: []}],
+    subcomment_parent_id: null,
+    history: [{comment_state: false,selected_thread: null,subcomment_state: false,selected_comment: null,subcomments: [],subcomment_parent_id: null}],
     blur: false,
     username: null,
     user_id: null,
@@ -27,6 +28,7 @@ export default new Vuex.Store({
     pages: 1,
     page: 1,
     moderator_status: false,
+
 
   },
   mutations: {
@@ -149,10 +151,18 @@ export default new Vuex.Store({
 
     decrement_page(state){
       state.page--;
-    }, 
+    },
 
     update_moderator_status(state,boolean){
       state.moderator_status = boolean;
+    },
+
+    reset_page(state){
+      state.page = 1;
+    },
+
+    update_subcomment_parent_id(state,id){
+      state.subcomment_parent_id = id;
     }
 
 
