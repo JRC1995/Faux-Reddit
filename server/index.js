@@ -21,6 +21,10 @@ const db = mysql.createConnection({
   database : Config.database
 });
 
+
+var MongoClient = mongoDB.MongoClient;
+var url = "mongodb://localhost/";
+
 db.connect(function(err) {
   if (err) {
     console.error('error connecting: ' + err.stack);
@@ -147,9 +151,6 @@ app.get('/moderator_status',(req, res)=>{
   user_id = req.query.user_id;
   subforum_id = req.query.subforum_id;
 
-  console.log(user_id)
-  console.log(subforum_id)
-
   let sql = 'SELECT * FROM moderates WHERE user_id = ? AND subforum_id = ?;';
   db.query({
     sql: sql,
@@ -160,10 +161,8 @@ app.get('/moderator_status',(req, res)=>{
       console.error('error connecting: ' + error.stack);
       return;
     }
-    console.log("wait for it");
-    console.log(results);
+
     if(results.length!=0){
-      console.log(true)
       res.send(true);
     }
     else{
@@ -190,7 +189,7 @@ app.get('/all_subcategories',(req,res)=>{
   });
 });
 
-// RETRIEVE USER DETAILS FOR LOGIN AUTHENTICATION
+// delete threads
 
 app.get('/delete_thread',(req, res)=>{
   thread_id = req.query.thread_id;
@@ -209,6 +208,41 @@ app.get('/delete_thread',(req, res)=>{
     else{
       res.send("success");
     }
+  });
+});
+
+// delete comments
+
+app.get('/delete_comments',(req, res)=>{
+
+  comment_id = req.query.comment_id;
+  parent_id = req.query.parent_id;
+
+  console.log(comment_id)
+  console.log(parent_id)
+
+  var MongoClient = mongoDB.MongoClient;
+  var url = "mongodb://localhost/";
+
+  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("proto_reddit");
+    dbo.collection("comments").updateOne(
+      {'_id': parent_id, 'child._id': comment_id},
+      { $set: { 'child.$.removed': 1 }},
+      {},
+      function(err, result) {
+        console.log(result)
+        console.log(err)
+        if (err) {
+          res.send("unsuccessful");
+          throw err;
+        }
+        else{
+          res.send("success");
+        }
+        db.close();
+      });
   });
 });
 
@@ -298,6 +332,340 @@ app.get('/description',(req,res)=>{
     }
 
     res.send(results);
+  });
+});
+
+//grab subscriptions for a given user
+app.get('/subscriptions',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+
+
+  let sql = 'SELECT * \
+             FROM subscribes as sub \
+             JOIN subforum ON subforum.subforum_id = sub.subforum_id \
+             WHERE sub.user_id = ? AND sub.subforum_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//create a subscription for a given user and given forum
+app.get('/create_subscription',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+
+
+  let sql = 'INSERT INTO subscribes (user_id, subforum_id) \
+             VALUES (?, ?)';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//deletes a subscription for a given user
+app.get('/delete_subscription',(req, res) =>{
+  user_id = req.query.user_id
+  subforum_id = req.query.subforum_id;
+
+
+  let sql = 'DELETE FROM subscribes \
+             WHERE user_id = ? AND subforum_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, subforum_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//gets a vote for a given user and thread
+app.get('/get_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+
+
+  let sql = 'SELECT * \
+             FROM thread_votes \
+             WHERE user_id = ? AND thread_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//creates a vote for a given user and thread
+app.get('/create_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+  sentiment = req.query.sentiment;
+
+  let sql = 'INSERT INTO thread_votes (user_id, thread_id, sentiment) \
+             VALUES (?, ?, ?)';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id, sentiment]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//deletes a vote for a given user and thread
+app.get('/delete_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+
+
+  let sql = 'DELETE FROM thread_votes \
+             WHERE user_id = ? AND thread_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//updates a vote for a given user and thread
+app.get('/update_thread_vote',(req, res) =>{
+  user_id = req.query.user_id
+  thread_id = req.query.thread_id;
+  sentiment = req.query.sentiment
+
+  let sql = 'UPDATE thread_votes \
+             SET sentiment = ? \
+             WHERE user_ID = ? AND thread_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [sentiment, user_id, thread_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//returns a vote for a given user_id and comment_id
+app.get('/get_comment_vote',(req, res) =>{
+  user_id = req.query.user_id
+  comment_id = req.query.comment_id;
+
+  let sql = 'SELECT * \
+             FROM comment_votes \
+             WHERE user_id = ? AND comment_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    res.send(results);
+  });
+});
+
+//create a comment vote for a given user_id and comment_id
+app.get('/create_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+  sentiment = req.query.sentiment;
+  comment_score = req.query.comment_score;
+  parent_id = req.query.parent_id
+
+  let sql = 'INSERT INTO comment_votes (user_id, comment_id, sentiment) \
+             VALUES (?, ?, ?)';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id, sentiment]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+
+    var MongoClient = mongoDB.MongoClient;
+    var url = "mongodb://localhost/";
+
+    console.log(parent_id, comment_id, comment_score)
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("proto_reddit");
+      dbo.collection("comments").updateOne(
+        {'_id': parent_id, 'child._id': comment_id},
+        { $set: { 'child.$.score': parseInt(comment_score)+parseInt(sentiment) }},
+        {},
+        function(err, result) {
+          console.log(result)
+          console.log(err)
+          if (err) {
+            res.send("unsuccessful");
+            throw err;
+          }
+          else{
+            res.send("success");
+          }
+          db.close();
+        });
+    });
+  });
+});
+
+//delete a comment vote for a given user_id and comment_id
+app.get('/delete_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+  comment_score = req.query.comment_score;
+  sentiment = req.query.sentiment,
+  parent_id = req.query.parent_id
+
+  let sql = 'DELETE FROM comment_votes \
+             WHERE user_id = ? AND comment_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    var MongoClient = mongoDB.MongoClient;
+    var url = "mongodb://localhost/";
+
+    console.log(parent_id, comment_id, comment_score)
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("proto_reddit");
+      dbo.collection("comments").updateOne(
+        {'_id': parent_id, 'child._id': comment_id},
+        { $set: { 'child.$.score': parseInt(comment_score)-parseInt(sentiment) }},
+        {},
+        function(err, result) {
+          console.log(result)
+          console.log(err)
+          if (err) {
+            res.send("unsuccessful");
+            throw err;
+          }
+          else{
+            res.send("success");
+          }
+          db.close();
+        });
+    });
+  });
+});
+
+//update a comment vote for a given user_id and comment_id
+app.get('/update_comment_vote',(req, res) =>{
+  user_id = req.query.user_id;
+  comment_id = req.query.comment_id;
+  sentiment = req.query.sentiment;
+  parent_id = req.query.parent_id;
+  comment_score = req.query.comment_score;
+
+  let sql = 'UPDATE comment_votes \
+             SET sentiment = ? \
+             WHERE user_ID = ? AND comment_id = ?';
+
+  db.query({
+    sql: sql,
+    timeout: 40000, // 40s
+    values: [sentiment, user_id, comment_id]
+  }, function (error, results, fields) {
+    if (error) {
+      console.error('error connecting: ' + error.stack);
+      return;
+    }
+
+    var MongoClient = mongoDB.MongoClient;
+    var url = "mongodb://localhost/";
+
+    console.log(parent_id, comment_id, comment_score)
+    MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("proto_reddit");
+      dbo.collection("comments").updateOne(
+        {'_id': parent_id, 'child._id': comment_id},
+        { $set: { 'child.$.score': parseInt(comment_score)+2*parseInt(sentiment) }},
+        {},
+        function(err, result) {
+          console.log(result)
+          console.log(err)
+          if (err) {
+            res.send("unsuccessful");
+            throw err;
+          }
+          else{
+            res.send("success");
+          }
+          db.close();
+        });
+    });
   });
 });
 
@@ -406,296 +774,6 @@ app.get('/create_comment',(req,res)=>{
         }
         db.close();
       });
-  });
-});
-
-//grab subscriptions for a given user 
-app.get('/subscriptions',(req, res) =>{
-  user_id = req.query.user_id
-  subforum_id = req.query.subforum_id;
-  
-
-  let sql = 'SELECT * \
-             FROM subscribes as sub \
-             JOIN subforum ON subforum.subforum_id = sub.subforum_id \
-             WHERE sub.user_id = ? AND sub.subforum_id = ?';
-
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, subforum_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//create a subscription for a given user and given forum
-app.get('/create_subscription',(req, res) =>{
-  user_id = req.query.user_id
-  subforum_id = req.query.subforum_id;
-  
-
-  let sql = 'INSERT INTO subscribes (user_id, subforum_id) \
-             VALUES (?, ?)';
-
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, subforum_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//deletes a subscription for a given user
-app.get('/delete_subscription',(req, res) =>{
-  user_id = req.query.user_id
-  subforum_id = req.query.subforum_id;
-  
-
-  let sql = 'DELETE FROM subscribes \
-             WHERE user_id = ? AND subforum_id = ?';
-
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, subforum_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//gets a vote for a given user and thread
-app.get('/get_thread_vote',(req, res) =>{
-  user_id = req.query.user_id
-  thread_id = req.query.thread_id;
-  
-
-  let sql = 'SELECT * \
-             FROM thread_votes \
-             WHERE user_id = ? AND thread_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, thread_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//creates a vote for a given user and thread
-app.get('/create_thread_vote',(req, res) =>{
-  user_id = req.query.user_id
-  thread_id = req.query.thread_id;
-  sentiment = req.query.sentiment;
-
-  let sql = 'INSERT INTO thread_votes (user_id, thread_id, sentiment) \
-             VALUES (?, ?, ?)';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, thread_id, sentiment]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//deletes a vote for a given user and thread
-app.get('/delete_thread_vote',(req, res) =>{
-  user_id = req.query.user_id
-  thread_id = req.query.thread_id;
-
-
-  let sql = 'DELETE FROM thread_votes \
-             WHERE user_id = ? AND thread_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, thread_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//updates a vote for a given user and thread
-app.get('/update_thread_vote',(req, res) =>{
-  user_id = req.query.user_id
-  thread_id = req.query.thread_id;
-  sentiment = req.query.sentiment
-
-  let sql = 'UPDATE thread_votes \
-             SET sentiment = ? \
-             WHERE user_ID = ? AND thread_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [sentiment, user_id, thread_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//updates a vote for a comment
-app.get('/mongo_update_comment_vote',(req, res) =>{
-  parent_id = req.query.parent_id
-  comment_id = req.query.comment_id
-  comment_score = req.query.comment_score
-
-
-  var MongoClient = mongoDB.MongoClient;
-  var url = "mongodb://localhost/";
-  console.log(parent_id, comment_id, comment_score)
-  MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("proto_reddit");
-    dbo.collection("comments").updateOne(
-      {'_id': parent_id, 'child._id': comment_id},
-      { $set: { 'child.$.score': comment_score }},
-      {},
-      function(err, result) {
-        console.log(result)
-        console.log(err)
-        if (err) {
-          res.send("unsuccessful");
-          throw err;
-        }
-        else{
-          res.send("success");
-        }
-        db.close();
-      });
-  });
-
-});
-
-//returns a vote for a given user_id and comment_id
-app.get('/get_comment_vote',(req, res) =>{
-  user_id = req.query.user_id
-  comment_id = req.query.comment_id;
-
-  let sql = 'SELECT * \
-             FROM comment_votes \
-             WHERE user_id = ? AND comment_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, comment_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//create a comment vote for a given user_id and comment_id
-app.get('/create_comment_vote',(req, res) =>{
-  user_id = req.query.user_id;
-  comment_id = req.query.comment_id;
-  sentiment = req.query.sentiment;
-
-  let sql = 'INSERT INTO comment_votes (user_id, comment_id, sentiment) \
-             VALUES (?, ?, ?)';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, comment_id, sentiment]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//delete a comment vote for a given user_id and comment_id
-app.get('/delete_comment_vote',(req, res) =>{
-  user_id = req.query.user_id;
-  comment_id = req.query.comment_id;
-
-  let sql = 'DELETE FROM comment_votes \
-             WHERE user_id = ? AND comment_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [user_id, comment_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
-  });
-});
-
-//update a comment vote for a given user_id and comment_id
-app.get('/update_comment_vote',(req, res) =>{
-  user_id = req.query.user_id;
-  comment_id = req.query.comment_id;
-  sentiment = req.query.sentiment;
-
-  let sql = 'UPDATE comment_votes \
-             SET sentiment = ? \
-             WHERE user_ID = ? AND comment_id = ?';
-      
-  db.query({
-    sql: sql,
-    timeout: 40000, // 40s
-    values: [sentiment, user_id, comment_id]
-  }, function (error, results, fields) {
-    if (error) {
-      console.error('error connecting: ' + error.stack);
-      return;
-    }
-
-    res.send(results);
   });
 });
 
