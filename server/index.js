@@ -830,10 +830,7 @@ app.get('/create_comment',(req,res)=>{
 
   unique_id = '_' + Math.random().toString(36).substr(2, 9)
 
-
   to_insert = {_id: unique_id,body: body,score:1, user_name: username.toLowerCase(), removed: 0, created_utc:timestamp}
-
-
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
