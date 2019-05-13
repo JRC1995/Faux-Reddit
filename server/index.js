@@ -62,8 +62,7 @@ app.get('/frontpage_threads',(req,res)=>{
   let sql = 'SELECT * \
              FROM thread t JOIN user_details u ON u.user_id = t.user_id \
              WHERE removed=0 '+sql_component+'\
-             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC \
-             LIMIT 100';
+             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC';
 
   db.query({
     sql: sql,
