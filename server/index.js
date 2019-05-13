@@ -218,7 +218,6 @@ app.get('/delete_comments',(req, res)=>{
   comment_id = req.query.comment_id;
   parent_id = req.query.parent_id;
 
-
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
@@ -230,7 +229,6 @@ app.get('/delete_comments',(req, res)=>{
       { $set: { 'child.$.removed': 1 }},
       {},
       function(err, result) {
-
         if (err) {
           res.send("unsuccessful");
           throw err;
@@ -553,7 +551,6 @@ app.get('/create_comment_vote',(req, res) =>{
         { $set: { 'child.$.score': parseInt(comment_score)+parseInt(sentiment) }},
         {},
         function(err, result) {
-
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -631,7 +628,6 @@ app.get('/delete_comment_vote',(req, res) =>{
         { $set: { 'child.$.score': parseInt(comment_score)-parseInt(sentiment) }},
         {},
         function(err, result) {
-
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -708,7 +704,6 @@ app.get('/update_comment_vote',(req, res) =>{
         { $set: { 'child.$.score': parseInt(comment_score)+2*parseInt(sentiment) }},
         {},
         function(err, result) {
-
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -836,7 +831,6 @@ app.get('/create_comment',(req,res)=>{
   unique_id = '_' + Math.random().toString(36).substr(2, 9)
 
   to_insert = {_id: unique_id,body: body,score:1, user_name: username.toLowerCase(), removed: 0, created_utc:timestamp}
-
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
