@@ -14,7 +14,9 @@
 <script>
 import axios from 'axios';
 import { mapState } from 'vuex';
+
 import Swal from 'sweetalert2'
+
 
 export default {
   name: "Description",
@@ -112,6 +114,7 @@ methods: {
       }
     }).then(response => {
        this.suscribed=false;
+
        Swal.fire({
                    type: 'success',
                    title: "Unsubscription Successful",
@@ -119,6 +122,7 @@ methods: {
                    showConfirmButton: false,
                    timer: 1200
                  });
+
     })
   }
 }
