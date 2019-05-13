@@ -15,6 +15,9 @@
 import axios from 'axios';
 import { mapState } from 'vuex';
 
+import Swal from 'sweetalert2'
+
+
 export default {
   name: "Description",
 
@@ -80,7 +83,25 @@ methods: {
               }
             }).then(response => {
               this.suscribed=true;
+              Swal.fire({
+                          type: 'success',
+                          title: "Subscription Successful",
+                          focusConfirm: false,
+                          showConfirmButton: false,
+                          timer: 1200
+                        });
             })
+    }
+    else
+    {
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: 'You must first log in to subscribe',
+                  focusConfirm: false,
+                  timer: 1500
+                });
+
     }
 
   },
@@ -93,6 +114,15 @@ methods: {
       }
     }).then(response => {
        this.suscribed=false;
+
+       Swal.fire({
+                   type: 'success',
+                   title: "Unsubscription Successful",
+                   focusConfirm: false,
+                   showConfirmButton: false,
+                   timer: 1200
+                 });
+
     })
   }
 }

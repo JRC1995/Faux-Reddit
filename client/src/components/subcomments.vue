@@ -387,7 +387,14 @@ methods: {
       }
     }).then((response) => {
       if (response == "unsuccessful"){
-        alert("Something went wrong! Try again, perhaps?");
+        Swal.fire({
+                    type: 'error',
+                    title: "Oops..",
+                    text: "Something went wrong. Please try again !",
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    timer: 1200
+                  });
       }
       else{
 
@@ -396,6 +403,13 @@ methods: {
             comment_id: this.$store.state.selected_comment._id
           }
         }).then((response) => {
+          Swal.fire({
+                      type: 'success',
+                      title: "Comment Created",
+                      focusConfirm: false,
+                      showConfirmButton: false,
+                      timer: 1200
+                    });
             this.$store.state.subcomments = response.data;
             this.$store.commit('editor',false);
             this.$store.commit('flip_blur');
@@ -424,6 +438,13 @@ methods: {
               comment_id: this.$store.state.selected_comment._id
             }
           }).then((response) => {
+            Swal.fire({
+                        type: 'success',
+                        title: "Comment Deleted",
+                        focusConfirm: false,
+                        showConfirmButton: false,
+                        timer: 1200
+                      });
               this.$store.state.subcomments = response.data
               if (pos=='parent')
               {
@@ -431,7 +452,14 @@ methods: {
               }
             })
         }
-        else Swal("Something went wrong! Try again, perhaps?");
+        else Swal.fire({
+                    type: 'error',
+                    title: "Oops..",
+                    text: "Something went wrong. Please try again !",
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    timer: 1200
+                  });
       })
   },
 

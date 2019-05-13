@@ -166,9 +166,6 @@ methods: {
   },
 
   voting(thread_id, sentiment){
-  //if backend sentiment is equal to new sentiment, set sentiment to 0
-  //w
-  //if backend sentiment is equal to new sentiment, delete sentiment\
     console.log(this.$store.state.username, thread_id, sentiment);
 
     if (this.$store.state.logged_in == true){
@@ -400,6 +397,14 @@ methods: {
              user_id: this.$store.state.user_id
         }
       }).then((response) => {
+
+        Swal.fire({
+                    type: 'success',
+                    title: "Thread Created",
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    timer: 1200
+                  });
 
         console.log("response: ")
         console.log(response)

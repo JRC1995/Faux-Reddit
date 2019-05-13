@@ -1,11 +1,11 @@
 
  <template>
  <div class="header_login">
-        <b-button v-on:click="login()">LOGIN</b-button>
+        <button v-on:click="login()">LOGIN</button>
     <div v-if="visible" id="login_page">
         <input v-model="user" placeholder="username">
         <input v-model="password" :type="passwordType" placeholder="password">
-        <b-button v-on:click="authenticate()">SUBMIT</b-button>
+        <button v-on:click="authenticate()">SUBMIT</button>
     </div>
    </div>
  </template>

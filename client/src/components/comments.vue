@@ -27,7 +27,7 @@
               <div class="thread_title">
                 <b>
                 <span v-html="thread.title" v-if="thread_deleted==false"></span>
-                <span style="color:red;" v-html="thread.title+' [DELETED]'" v-else></span>
+                <span style="color:#ff4d4d;" v-html="thread.title+' [DELETED]'" v-else></span>
                 </b>
               </div><br>
               <div class="thread_details">
@@ -545,9 +545,24 @@ methods: {
       }
     }).then((response) => {
       if (response == "unsuccessful"){
-        alert("Something went wrong! Try again, perhaps?");
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: "Something went wrong. Please try again !",
+                  focusConfirm: false,
+                  showConfirmButton: false,
+                  timer: 1200
+                });
       }
       else{
+
+        Swal.fire({
+                    type: 'success',
+                    title: "Comment Created",
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    timer: 1200
+                  });
 
         axios.get('http://localhost:5000/comments',{
           params: {
@@ -573,8 +588,24 @@ methods: {
     }).then((response) => {
 
         var message = response.data;
-        if (message == "success") this.thread_deleted = true;
-        else alert("Something went wrong! Try again, perhaps?");
+        if (message == "success")
+        {this.thread_deleted = true;
+          Swal.fire({
+                      type: 'success',
+                      title: "Thread Deleted",
+                      focusConfirm: false,
+                      showConfirmButton: false,
+                      timer: 1200
+                    });
+        }
+        else Swal.fire({
+                        type: 'error',
+                        title: "Oops..",
+                        text: "Something went wrong. Please try again !",
+                        focusConfirm: false,
+                        showConfirmButton: false,
+                        timer: 1200
+                      });
       })
   },
 
@@ -590,6 +621,13 @@ methods: {
         var message = response.data;
         if (message == "success")
         {
+          Swal.fire({
+                      type: 'success',
+                      title: "Comment Deleted",
+                      focusConfirm: false,
+                      showConfirmButton: false,
+                      timer: 1200
+                    });
           axios.get('http://localhost:5000/comments',{
             params: {
               thread_id: this.thread.thread_id
@@ -598,7 +636,14 @@ methods: {
               this.comments = response.data
             })
         }
-        else alert("Something went wrong! Try again, perhaps?");
+        else Swal.fire({
+                        type: 'error',
+                        title: "Oops..",
+                        text: "Something went wrong. Please try again !",
+                        focusConfirm: false,
+                        showConfirmButton: false,
+                        timer: 1200
+                      });
       })
   },
 
