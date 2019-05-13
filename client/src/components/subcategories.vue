@@ -2,7 +2,7 @@
   <div class="subapp">
       <div v-bind:key="subcategory.subforum_id" v-for="subcategory in subcategories">
         <label class="container"> {{subcategory.name}}
-          <input type="checkbox" v-on:change="filter($event, subcategory.subforum_id)" :name="subcategory.name" :value="subcategory.name">
+          <input type="checkbox" :id="subcategory.subforum_id" v-on:change="filter($event, subcategory.subforum_id)" :name="subcategory.name" :value="subcategory.name">
           <span class="checkmark"></span>
         </label>
       </div>
@@ -29,11 +29,17 @@ data(){
 
 },
 mounted () {
+
   axios.get('http://localhost:5000/subcategories',{
     params: {
       category_id: this.category_id
     }
-  }).then(response => (this.subcategories = response.data))
+  }).then(response => {
+    this.subcategories = response.data;
+    var i
+    for (i in this.$store.state.list_sub_id){
+      document.getElementById(this.$store.state.list_sub_id[i]).checked = true;
+    }});
 },
 
 methods: {
@@ -44,6 +50,7 @@ methods: {
     var i
     for (i in this.$store.state.list_sub_id){
       param[this.$store.state.list_sub_id[i]] = this.$store.state.list_sub_id[i]
+      document.getElementById(this.$store.state.list_sub_id[i]).checked = true;
 
     }
     console.log(param)
@@ -53,7 +60,7 @@ methods: {
         param: param
       }}).then((response) => {
         var threads = response.data
-        var item_no = 6
+        var item_no = 15
 
         //format threads
         var pages = Math.ceil(threads.length/item_no)
@@ -74,7 +81,8 @@ methods: {
 
         }
 
-        this.$store.commit("update_threads",page_dict)
+        this.$store.commit("update_threads",page_dict);
+        this.$store.commit("reset_page");
       })
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="app">
 
-    <button class="button_style" style="margin-bottom:7px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor">New Post</button>
+    <button class="button_style" style="margin-bottom:7px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor">New Thread</button>
 
     <div class="outer_form" v-if="this.$store.state.editor==true">
       <div class="editor">
@@ -21,7 +21,7 @@
 
     <div style="min-height: 500px">
 
-    <table style="width:100%">
+    <table style="width:100%;table-layout: fixed;">
       <div v-bind:key="thread.thread_id" v-for="thread in this.$store.state.threads[this.$store.state.page]">
         <tr>
           <td style="vertical-align: middle;">
@@ -45,7 +45,7 @@
 
   </div>
 
-    <div class="outer_form">
+    <div class="outer_form" style="margin-bottom: 50px;">
       <button class="button_style" style="margin-top: 20px; margin-right: 10px;margin-left:-40px" v-on:click="prev">Prev</button>
       <span style="margin-top: 10px">Page {{this.$store.state.page}} of {{this.$store.state.pages}}</span>
       <button class="button_style" style="margin-top: 20px; margin-left: 10px;" v-on:click="next">Next</button>
@@ -86,13 +86,20 @@ data(){
 },
 mounted () {
 
+var param={}
+var i
+for (i in this.$store.state.list_sub_id){
+  param[this.$store.state.list_sub_id[i]] = this.$store.state.list_sub_id[i]
+
+}
+
 axios.get('http://localhost:5000/frontpage_threads',{
   params: {
-    param: {}
+    param: param
   }
 }).then((response) => {
     var threads = response.data
-    var item_no = 6
+    var item_no = 15
 
     //format threads
     var pages = Math.ceil(threads.length/item_no)
@@ -136,7 +143,7 @@ methods: {
       }
     }).then((response) => {
         var threads = response.data
-        var item_no = 6
+        var item_no = 15
 
         //format threads
         var pages = Math.ceil(threads.length/item_no)
@@ -424,7 +431,7 @@ methods: {
           }}).then((response) => {
 
             var threads = response.data
-            var item_no = 6
+            var item_no = 15
 
             //format threads
             var pages = Math.ceil(threads.length/item_no)
@@ -501,15 +508,14 @@ methods: {
   text-align: left;
   text-decoration: none;
   display: inline-block;
-  font-size: 17px;
-  min-width: 100%;
-  max-width: 100%;
+  font-size: 15px;
+  max-width: 900px;
   transition: all 0.4s;
   margin-bottom: 2px;
   background-color:rgba(0, 0, 0, 0);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 
 }
 
@@ -520,6 +526,8 @@ methods: {
   border: none;
   cursor: pointer;
   text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   text-align: left;
   text-decoration: none;
   display: inline-block;
@@ -538,16 +546,19 @@ methods: {
   color: #444444;
   text-align: left;
   text-decoration: none;
-  font-size: 16px;
   padding-top: -5px;
   box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
   background-color: white;
-  padding-top: 2%;
-  padding-bottom: 2%;
+  padding-top: 2.5%;
+  padding-bottom: 2.5%;
   padding-left:5px;
+  padding-right: 0px;
   min-width: 100%;
   max-width: 100%;
   margin-left: 0.5%;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow:hidden;
 
 }
 
@@ -559,7 +570,7 @@ methods: {
 .thread_link:hover{
   color: #1651bc;
   z-index:999;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .username_link:hover{
@@ -642,6 +653,10 @@ img.vote_image:hover {
    margin-bottom: 10px;
    font-family: 'Avenir', Helvetica, Arial, sans-serif;
    color: #2c3e50;
+}
+
+td {
+  max-width: 100%;
 }
 
 /*table, th, td {
