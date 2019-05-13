@@ -5,7 +5,7 @@
 
     <div class="outer_form" v-if="this.$store.state.editor==true">
       <div class="editor">
-        <form>
+        <form  v-on:submit.prevent>
         <select v-model="subcategory_id" class="styled-select" id="subcategory_select">
         <option value="" disabled selected>Choose subcategory</option>
         <option v-for="subcategory in this.subcategories" :value="subcategory.subforum_id">
@@ -26,9 +26,9 @@
         <tr>
           <td style="vertical-align: middle;">
             <div class="score_block" >
-              <button class="vote" v-on:click="voting(thread.thread_id, 1)"><img class="vote_image" src="../assets/like.png" height="20" width="20"></button>
+              <button class="vote"><img class="vote_image" src="../assets/like.png" height="20" width="20" v-on:click="voting(thread.thread_id,1)"></button>
               <br><b>{{format_score(thread.score)}}</b><br>
-              <button class="vote" v-on:click="voting(thread.thread_id, -1)"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20"></button>
+              <button class="vote"><img  class="vote_image" src="../assets/dislike.png" height="20" width="20" v-on:click="voting(thread.thread_id,-1)"></button>
             </div>
           </td>
           <td style="width:100%;vertical-align: middle;">
@@ -58,6 +58,7 @@
 import axios from 'axios';
 import moment from 'moment';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import Swal from 'sweetalert2'
 
 
 export default {
@@ -94,7 +95,6 @@ axios.get('http://localhost:5000/frontpage_threads',{
     var item_no = 6
 
     //format threads
-    //test
     var pages = Math.ceil(threads.length/item_no)
 
     this.$store.commit('update_pages',pages)
@@ -129,12 +129,203 @@ methods: {
     return formatted
   },
 
+  update_mount(){
+    axios.get('http://localhost:5000/frontpage_threads',{
+      params: {
+        param: {}
+      }
+    }).then((response) => {
+        var threads = response.data
+        var item_no = 6
+
+        //format threads
+        var pages = Math.ceil(threads.length/item_no)
+
+        this.$store.commit('update_pages',pages)
+
+        var page_dict = {}
+
+        for (var page=1;page<=pages;page++){
+          var page_threads = []
+          for (var i=(page-1)*item_no;i<((page-1)*item_no)+item_no;i++){
+            if (i< threads.length)
+            {
+              page_threads.push(threads[i])
+            }
+          }
+          page_dict[page] = page_threads
+
+        }
+
+        this.$store.commit("update_threads",page_dict)
+      })
+
+      axios.get('http://localhost:5000/all_subcategories').then((response) => {
+          this.subcategories = response.data
+        })
+  },
+
+  voting(thread_id, sentiment){
+    console.log(this.$store.state.username, thread_id, sentiment);
+
+    if (this.$store.state.logged_in == true){
+        axios.get('http://localhost:5000/get_thread_vote', {
+          params: {
+            user_id: this.$store.state.user_id,
+            thread_id: thread_id
+          }
+        }).then((response) => {
+            //if no vote exists add it
+
+            if(typeof response.data[0] == "undefined")
+            {
+              console.log("yes", sentiment)
+              axios.get('http://localhost:5000/create_thread_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  thread_id: thread_id,
+                  sentiment: sentiment
+                }
+              }).then(response => {
+
+                if (sentiment==1)
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Upvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                else
+                {
+                  Swal.fire({
+                              type: 'success',
+                              title: "Downvoted Successfully",
+                              focusConfirm: false,
+                              showConfirmButton: false,
+                              timer: 1200
+                            })
+                }
+                this.update_mount();
+              })
+            }
+            else
+            {
+              this.sentiment = response.data[0].sentiment
+              console.log(this.sentiment)
+              console.log("ASDBASD")
+
+
+
+              //if sentiment is the same delete it
+              if(this.sentiment == sentiment)
+              {
+                if (sentiment == 1)
+                {
+                  var message = "You have already upvoted this thread. Upvoting again will revoke your upvote. Do you want to proceed?"
+                }
+                else
+                {
+                  var message = "You have already downvoted this thread. Downvoting again will revoke your downvote. Do you want to proceed?"
+                }
+                Swal.fire({ title: 'Are you sure?',
+                            text: message,
+                            type: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3676e8',
+                            cancelButtonColor: '#B2B8BF',
+                            confirmButtonText: 'Proceed'
+                          }).then((result) => {
+                            if (result.value) {
+                              axios.get('http://localhost:5000/delete_thread_vote', {
+                              params: {
+                                user_id: this.$store.state.user_id,
+                                thread_id: thread_id
+                              }
+                              }).then(response => {
+                                if (sentiment==1)
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Upvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                else
+                                {
+                                  Swal.fire({
+                                              type: 'success',
+                                              title: "Downvote Removed",
+                                              focusConfirm: false,
+                                              showConfirmButton: false,
+                                              timer: 1200
+                                            })
+                                }
+                                this.update_mount();
+                              })
+
+                            }
+                          })
+
+              }
+              //else if different update it
+              else
+              {
+                axios.get('http://localhost:5000/update_thread_vote', {
+                params: {
+                  user_id: this.$store.state.user_id,
+                  thread_id: thread_id,
+                  sentiment: sentiment
+                }
+                }).then(response => {
+                  if (sentiment==1)
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Upvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  else
+                  {
+                    Swal.fire({
+                                type: 'success',
+                                title: "Downvoted Successfully",
+                                focusConfirm: false,
+                                showConfirmButton: false,
+                                timer: 1200
+                              })
+                  }
+                  this.update_mount();
+                })
+              }
+            }
+        })
+    }
+    else{
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: "You must log in to vote!",
+                  focusConfirm: false,
+                  confirmButtonColor: '#3676e8',
+                })
+    }
+  },
+
   show_comments(thread){
     var current_states = {comment_state: this.$store.state.comment_state,
                       selected_thread: this.$store.state.selected_thread,
                       subcomment_state: this.$store.state.subcomment_state,
                       selected_comment: this.$store.state.selected_comment,
-                      subcomments: this.$store.state.subcomments}
+                      subcomments: this.$store.state.subcomments,
+                    subcomments_parent_id: this.$store.state.subcomment_parent_id}
     this.$store.commit('update_history',current_states);
     console.log(thread)
     this.$store.commit('change_comment_state_to_true');
@@ -149,7 +340,6 @@ methods: {
     this.$store.commit('flip_blur');
     this.$store.commit("select_username",username);
     this.$store.commit("show_userdetails",true);
-    console.log("ASBWAD");
   },
 
   format_score(score){
@@ -162,84 +352,6 @@ methods: {
       return score;
     }
   },
-  voting(thread_id, sentiment){
-    //if backend sentiment is equal to new sentiment, set sentiment to 0\
-    console.log(this.$store.state.username, thread_id, sentiment);
-
-    axios.get('http://localhost:5000/get_thread_vote', {
-      params: {
-        user_id: this.$store.state.user_id,
-        thread_id: thread_id
-      }
-    }).then((response) => {
-        //if no vote exists add it
-        
-        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
-        {
-          /*
-          axios.get('http://localhost:5000/create_subscription', {
-            params: {
-              user_id: this.$store.state.user_id,
-              subforum_id: this.$store.state.selected_thread.subforum_id
-            }
-          }).then(response => {
-            alert("Subscribed")
-          })
-          */
-          console.log("yes", sentiment)
-          axios.get('http://localhost:5000/create_thread_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id,
-              sentiment: sentiment
-            }
-          }).then(response => {
-            if(sentiment == 1)
-            {
-              alert("LIKED")
-            }
-            else
-            {
-              alert("DISLIKED")
-            }
-          })
-        }
-        else if(this.$store.state.logged_in == true)
-        {
-          this.sentiment = response.data[0].sentiment
-          console.log(this.sentiment)
-          console.log("ASDBASD")
-          //if sentiment is the same delete it
-          if(this.sentiment == sentiment)
-          {
-            axios.get('http://localhost:5000/delete_thread_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id
-            }
-            }).then(response => {
-              alert("VOTE DELETED")
-            })
-
-
-          }
-          //else if different update it
-          else
-          {
-            axios.get('http://localhost:5000/update_thread_vote', {
-            params: {
-              user_id: this.$store.state.user_id,
-              thread_id: thread_id,
-              sentiment: sentiment
-            }
-            }).then(response => {
-              alert("VOTE UPDATED")
-    
-            })
-          }
-        }
-    })
-  }, 
 
   open_editor(){
     this.subcategory_id = "";
@@ -285,6 +397,14 @@ methods: {
              user_id: this.$store.state.user_id
         }
       }).then((response) => {
+
+        Swal.fire({
+                    type: 'success',
+                    title: "Thread Created",
+                    focusConfirm: false,
+                    showConfirmButton: false,
+                    timer: 1200
+                  });
 
         console.log("response: ")
         console.log(response)
@@ -523,7 +643,6 @@ img.vote_image:hover {
    font-family: 'Avenir', Helvetica, Arial, sans-serif;
    color: #2c3e50;
 }
-
 
 /*table, th, td {
   border: 1px solid black;

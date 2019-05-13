@@ -1,4 +1,3 @@
-
 <template>
   <div class="app">
     <div v-if="this.description!=null">
@@ -6,13 +5,16 @@
       {{this.description[0].category_description}} <br>
       <div class="title"> <b>Subcategory: {{this.description[0].subforum_name}}</b> </div> <hr>
       {{this.description[0].subforum_description}} <br>
-      <button class="suscribe" v-on:click="subscribe()">Suscribe</button>
+      <button class="suscribe" v-on:click="unsubscribe()" v-if="suscribed==true && this.$store.state.logged_in==true">Unsuscribe</button>
+      <button class="suscribe" v-on:click="subscribe()" v-else>Suscribe</button>
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import { mapState } from 'vuex';
+import Swal from 'sweetalert2'
 
 export default {
   name: "Description",
@@ -21,6 +23,7 @@ data(){
   return{
 
      description:null,
+     suscribed:false,
 
   }
 
@@ -28,49 +31,97 @@ data(){
 mounted () {
 axios.get('http://localhost:5000/description',{params:{thread_id:this.$store.state.selected_thread.thread_id}})
   .then(response => (this.description = response.data))
+
+axios.get('http://localhost:5000/subscriptions', {
+  params: {
+    user_id: this.$store.state.user_id,
+    subforum_id: this.$store.state.selected_thread.subforum_id
+  }
+}).then((response) => {
+  if(typeof response.data[0] != "undefined")
+  {
+    this.suscribed=true;
+  }})
+
 },
 
+
+computed: mapState(['logged_in']),
+
+watch: {
+    logged_in: function (newVal, oldVal) {
+    if (newVal == true)
+    {
+      axios.get('http://localhost:5000/subscriptions', {
+        params: {
+          user_id: this.$store.state.user_id,
+          subforum_id: this.$store.state.selected_thread.subforum_id
+        }
+      }).then((response) => {
+        if(typeof response.data[0] != "undefined")
+        {
+          this.suscribed=true;
+        }})
+    }
+}},
+
 methods: {
+
   subscribe()
   {
-   // console.log(this.$store.state.username, this.$store.state.user_id,   this.$store.state.selected_thread.subforum_id, this.description[0].subforum_name)
-    axios.get('http://localhost:5000/subscriptions', {
+    if (this.$store.state.logged_in==true)
+    {
+      console.log(this.$store.state.username, this.$store.state.selected_thread.subforum_id)
+     // console.log(this.$store.state.username, this.$store.state.user_id,   this.$store.state.selected_thread.subforum_id, this.description[0].subforum_name)
+
+      axios.get('http://localhost:5000/create_subscription', {
+              params: {
+                user_id: this.$store.state.user_id,
+                subforum_id: this.$store.state.selected_thread.subforum_id
+              }
+            }).then(response => {
+              this.suscribed=true;
+              Swal.fire({
+                          type: 'success',
+                          title: "Subscription Successful",
+                          focusConfirm: false,
+                          showConfirmButton: false,
+                          timer: 1200
+                        });
+            })
+    }
+    else
+    {
+      Swal.fire({
+                  type: 'error',
+                  title: "Oops..",
+                  text: 'You must first log in to subscribe',
+                  focusConfirm: false,
+                  timer: 1500
+                });
+
+    }
+
+  },
+  unsubscribe()
+  {
+    axios.get('http://localhost:5000/delete_subscription', {
       params: {
         user_id: this.$store.state.user_id,
         subforum_id: this.$store.state.selected_thread.subforum_id
       }
-    }).then((response) => {
-        //this.subforum_ids = response.data[0].subforum_id
-        if(typeof response.data[0] == "undefined" && this.$store.state.logged_in == true)
-        {
-          axios.get('http://localhost:5000/create_subscription', {
-            params: {
-              user_id: this.$store.state.user_id,
-              subforum_id: this.$store.state.selected_thread.subforum_id
-            }
-          }).then(response => {
-            alert("Subscribed")
-          })
-        }
-        else if (this.$store.state.logged_in == true)
-        {
-         
-          axios.get('http://localhost:5000/delete_subscription', {
-            params: {
-              user_id: this.$store.state.user_id,
-              subforum_id: this.$store.state.selected_thread.subforum_id
-            }
-          }).then(response => {
-             alert("Unsubscribed")
-          })
-
-        }
-        
-        //console.log(response.data[0].description, this.subforum_ids)
+    }).then(response => {
+       this.suscribed=false;
+       Swal.fire({
+                   type: 'success',
+                   title: "Unsubscription Successful",
+                   focusConfirm: false,
+                   showConfirmButton: false,
+                   timer: 1200
+                 });
     })
   }
 }
-
 }
 
 

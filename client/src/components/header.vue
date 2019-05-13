@@ -21,7 +21,7 @@
    <div class="registration-form" v-else-if="this.registration_form == true">
      <form id="signup_form" v-on:submit.prevent>
        <table>
-       <tr><td>Username: </td><td><input type="text" v-model="signup_user" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
+       <tr><td>Username: </td><td><input type="text" v-model="signup_user" id="signup_user" class="field" pattern=".{3,12}" placeholder="Enter Username" required title="Must be greater than 2 and less than 13 characters"></td></tr>
        <tr><td>Email: </td><td><input type="email" v-model="signup_email" class="field" placeholder="Enter Email" required></td></tr>
        <tr><td>Password: </td><td><input type="password" v-model="signup_pass"  class="field" id="password" placeholder="Enter Password" required></td></tr>
        <tr><td>Re-enter Password: </td><td><input type="password" v-model="signup_cpass"  id="confirm_password" class="field" v-on:change="confirm_password()" placeholder="Re-enter Password" required></td></tr>
@@ -79,6 +79,7 @@
 
 <script>
 import axios from 'axios'
+import Swal from 'sweetalert2'
 
 export default {
   name: "Header",
@@ -157,12 +158,20 @@ export default {
               }
               else{
                 this.$store.commit("flip_logged_in");
-                this.$store.commit("update_username",this.login_user);
+                this.$store.commit("update_username",this.login_user.toLowerCase());
                 this.$store.commit("update_user_id",pass[0].user_id);
                 this.$store.commit('flip_blur');
                 this.login_form = false;
                 this.login_user = "";
                 this.login_pass = "";
+
+                Swal.fire({
+                            type: 'success',
+                            title: "Log in Successful",
+                            focusConfirm: false,
+                            showConfirmButton: false,
+                            timer: 1200
+                          });
 
                 if (this.$store.state.selected_thread!=null)
                 {
@@ -181,6 +190,8 @@ export default {
     },
 
     register(){
+
+      document.getElementById('signup_user').setCustomValidity("");
 
       var f = document.getElementById("signup_form")
       if (f.checkValidity()){
@@ -204,43 +215,25 @@ export default {
               }
             }).then(response => {
 
-              console.log(this.signup_user);
+
               this.$store.commit('flip_blur');
 
               this.registration_form = false;
               this.$store.commit("show_userdetails",false);
-
-              this.$store.commit("update_username",this.signup_user);
-
-              axios.get('http://localhost:5000/authenticate', {
-                  params: {
-                    user_name: this.signup_user
-                  }
-                }).then(response =>
-                  { var pass = response.data;
-                    this.$store.commit("update_user_id",pass[0].user_id);
-
-                    this.$store.commit("flip_logged_in");
+              this.signup_pass = "";
+              this.signup_cpass = "";
+              this.signup_email = "";
+              this.signup_user = "";
 
 
-                    this.signup_pass = "";
-                    this.signup_cpass = "";
-                    this.signup_email = "";
-                    this.signup_user = "";
+              Swal.fire({
+                          type: 'success',
+                          title: "Signed Up Successfully",
+                          focusConfirm: false,
+                          showConfirmButton: false,
+                          timer: 1200
+                        });
 
-
-                    if (this.$store.state.selected_thread!=null)
-                    {
-                      axios.get('http://localhost:5000/moderator_status',{
-                        params: {
-                          subforum_id: this.$store.state.selected_thread.subforum_id,
-                          user_id: this.$store.state.user_id
-                        }
-                      }).then((response) => {
-                          this.$store.commit('update_moderator_status', response.data);
-                        })
-                    }
-                  });
               });
           }
           // Username taken/in use: notify user of this
@@ -267,6 +260,13 @@ export default {
      this.$store.commit("update_username",null);
      this.$store.commit("update_user_id",null);
      this.$store.commit('update_moderator_status', false);
+     Swal.fire({
+                 type: 'success',
+                 title: "Successfully Logged out",
+                 focusConfirm: false,
+                 showConfirmButton: false,
+                 timer: 1200
+               });
    },
 
    username_click(){
