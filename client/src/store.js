@@ -15,7 +15,8 @@ export default new Vuex.Store({
     subcomment_state: false,
     selected_comment: null,
     subcomment_parent_id: null,
-    history: [{comment_state: false,selected_thread: null,subcomment_state: false,selected_comment: null,subcomments: [],subcomment_parent_id: null}],
+    orderbyscore: false,
+    history: [{comment_state: false,selected_thread: null,subcomment_state: false,selected_comment: null,subcomments: [],subcomment_parent_id: null,orderbyscore:false}],
     blur: false,
     username: null,
     user_id: null,
@@ -28,6 +29,7 @@ export default new Vuex.Store({
     pages: 1,
     page: 1,
     moderator_status: false,
+    orderbyscore: false
 
 
   },
