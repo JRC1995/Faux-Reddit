@@ -39,6 +39,7 @@ db.connect(function(err) {
 app.get('/frontpage_threads',(req,res)=>{
 
   param = JSON.parse(req.query.param);
+  orderbyscore = req.query.orderbyscore;
 
   let sql_component = '';
   var i = 0;
@@ -59,10 +60,23 @@ app.get('/frontpage_threads',(req,res)=>{
     sql_component += ") "
   }
 
+  console.log(orderbyscore)
+
   let sql = 'SELECT * \
              FROM thread t JOIN user_details u ON u.user_id = t.user_id \
              WHERE removed=0 '+sql_component+'\
-             ORDER BY CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC';
+             ORDER BY  CAST(t.created_utc/(360) AS INT) DESC, t.score DESC, t.created_utc DESC \
+             LIMIT 5000';
+
+  if (orderbyscore == "true")
+  {
+    console.log("hello")
+    sql = 'SELECT * \
+               FROM thread t JOIN user_details u ON u.user_id = t.user_id \
+               WHERE removed=0 '+sql_component+'\
+               ORDER BY  t.score DESC, t.created_utc DESC \
+               LIMIT 5000'; //CAST(t.created_utc/(360) AS INT) DESC,
+  }
 
   db.query({
     sql: sql,
@@ -217,17 +231,19 @@ app.get('/delete_comments',(req, res)=>{
   comment_id = req.query.comment_id;
   parent_id = req.query.parent_id;
 
+
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
-    var dbo = db.db("proto_reddit");
+    var dbo = db.db("reddit");
     dbo.collection("comments").updateOne(
       {'_id': parent_id, 'child._id': comment_id},
       { $set: { 'child.$.removed': 1 }},
       {},
       function(err, result) {
+
         if (err) {
           res.send("unsuccessful");
           throw err;
@@ -544,12 +560,13 @@ app.get('/create_comment_vote',(req, res) =>{
 
     MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db_.db("proto_reddit");
+      var dbo = db_.db("reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)+parseInt(sentiment) }},
         {},
         function(err, result) {
+
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -557,7 +574,7 @@ app.get('/create_comment_vote',(req, res) =>{
           else{
             MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
             if (err) throw err;
-            var dbo_ = db__.db("proto_reddit");
+            var dbo_ = db__.db("reddit");
             dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
             function(err, result) {
               console.log(result)
@@ -621,12 +638,13 @@ app.get('/delete_comment_vote',(req, res) =>{
 
     MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db_.db("proto_reddit");
+      var dbo = db_.db("reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)-parseInt(sentiment) }},
         {},
         function(err, result) {
+
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -634,7 +652,7 @@ app.get('/delete_comment_vote',(req, res) =>{
           else{
             MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
             if (err) throw err;
-            var dbo_ = db__.db("proto_reddit");
+            var dbo_ = db__.db("reddit");
             dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
             function(err, result) {
               console.log(result)
@@ -697,12 +715,13 @@ app.get('/update_comment_vote',(req, res) =>{
 
     MongoClient.connect(url, { useNewUrlParser: true }, function(err, db_) {
       if (err) throw err;
-      var dbo = db_.db("proto_reddit");
+      var dbo = db_.db("reddit");
       dbo.collection("comments").updateOne(
         {'_id': parent_id, 'child._id': comment_id},
         { $set: { 'child.$.score': parseInt(comment_score)+2*parseInt(sentiment) }},
         {},
         function(err, result) {
+
           if (err) {
             res.send("unsuccessful");
             throw err;
@@ -710,7 +729,7 @@ app.get('/update_comment_vote',(req, res) =>{
           else{
             MongoClient.connect(url, { useNewUrlParser: true }, function(err, db__) {
             if (err) throw err;
-            var dbo_ = db__.db("proto_reddit");
+            var dbo_ = db__.db("reddit");
             dbo_.collection("comments").aggregate([{ $unwind : "$child" }, { $match : { "child._id" : comment_id } }]).toArray(
             function(err, result) {
               console.log(result)
@@ -758,7 +777,7 @@ app.get('/comments',(req,res)=>{
 
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
-    var dbo = db.db("proto_reddit");
+    var dbo = db.db("reddit");
     var cursor = dbo.collection("comments").find({parent_id: "t"+thread_id});
     cursor.forEach(function(doc,err){
       comments_list.push(doc)
@@ -774,13 +793,16 @@ app.get('/comments',(req,res)=>{
 
   thread_id = req.query.thread_id;
 
+  console.log(thread_id)
+
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
-    var dbo = db.db("proto_reddit");
+    var dbo = db.db("reddit");
     dbo.collection("comments").findOne({_id: "t"+thread_id}, function(err, result) {
+        console.log(result)
         if (err) throw err;
         if (result==null){
           output = [];
@@ -804,7 +826,7 @@ app.get('/subcomments',(req,res)=>{
 
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
-    var dbo = db.db("proto_reddit");
+    var dbo = db.db("reddit");
     dbo.collection("comments").findOne({_id: comment_id}, function(err, result) {
         if (err) throw err;
         if (result==null){
@@ -830,12 +852,13 @@ app.get('/create_comment',(req,res)=>{
   unique_id = '_' + Math.random().toString(36).substr(2, 9)
 
   to_insert = {_id: unique_id,body: body,score:1, user_name: username.toLowerCase(), removed: 0, created_utc:timestamp}
+
   var MongoClient = mongoDB.MongoClient;
   var url = "mongodb://localhost/";
 
   MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
     if (err) throw err;
-    var dbo = db.db("proto_reddit");
+    var dbo = db.db("reddit");
     dbo.collection("comments").updateOne(
       {_id: parent_id},
       { $push: { child: to_insert }},
