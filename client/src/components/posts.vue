@@ -1,7 +1,9 @@
 <template>
   <div class="app">
 
-    <button class="button_style" style="margin-bottom:7px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor">New Thread</button>
+    <button class="button_style" style="margin-bottom:7px;margin-right:10px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor">New Thread</button>
+    <button class="button_style" style="margin-bottom:7px;" v-if="this.$store.state.orderbyscore==false" v-on:click="flip_order_by">Order by Score</button>
+    <button class="button_style" style="margin-bottom:7px;" v-else v-on:click="flip_order_by">Order by Time</button>
 
     <div class="outer_form" v-if="this.$store.state.editor==true">
       <div class="editor">
@@ -95,6 +97,7 @@ for (i in this.$store.state.list_sub_id){
 
 axios.get('http://localhost:5000/frontpage_threads',{
   params: {
+    orderbyscore: this.$store.state.orderbyscore,
     param: param
   }
 }).then((response) => {
@@ -137,9 +140,19 @@ methods: {
   },
 
   update_mount(){
+
+    var param={}
+    var i
+
+    for (i in this.$store.state.list_sub_id){
+      param[this.$store.state.list_sub_id[i]] = this.$store.state.list_sub_id[i]
+    }
+
+
     axios.get('http://localhost:5000/frontpage_threads',{
       params: {
-        param: {}
+        orderbyscore: this.$store.state.orderbyscore,
+        param: param
       }
     }).then((response) => {
         var threads = response.data
@@ -332,7 +345,8 @@ methods: {
                       subcomment_state: this.$store.state.subcomment_state,
                       selected_comment: this.$store.state.selected_comment,
                       subcomments: this.$store.state.subcomments,
-                    subcomments_parent_id: this.$store.state.subcomment_parent_id}
+                      subcomments_parent_id: this.$store.state.subcomment_parent_id,
+                      orderbyscore: this.$store.state.orderbyscore}
     this.$store.commit('update_history',current_states);
     console.log(thread)
     this.$store.commit('change_comment_state_to_true');
@@ -366,6 +380,11 @@ methods: {
     this.title = "";
     this.$store.commit('editor',true);
     this.$store.commit('flip_blur');
+  },
+
+  flip_order_by(){
+    this.$store.state.orderbyscore = !this.$store.state.orderbyscore;
+    this.update_mount()
   },
 
   prev()
@@ -427,6 +446,7 @@ methods: {
 
         axios.get('http://localhost:5000/frontpage_threads',{
           params: {
+            orderbyscore: this.$store.state.orderbyscore,
             param: param
           }}).then((response) => {
 

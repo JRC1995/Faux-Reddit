@@ -57,6 +57,7 @@ methods: {
 
     axios.get('http://localhost:5000/frontpage_threads',{
       params: {
+        orderbyscore: this.$store.state.orderbyscore,
         param: param
       }}).then((response) => {
         var threads = response.data
