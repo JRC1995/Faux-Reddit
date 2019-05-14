@@ -649,7 +649,7 @@ img.vote_image:hover {
   padding: 30px;
   border-radius: 10px;
   margin-top: 1%;
-  margin-left: -310px;
+  margin-left: -500px;
   box-shadow: 0 7px 16px 0 rgba(0,0,0,0.24), 0 7px 16px 0 rgba(0,0,0,0.10);
 }
 
