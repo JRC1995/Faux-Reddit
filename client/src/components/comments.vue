@@ -34,7 +34,7 @@
                 by <button class="username_link" v-bind:key="this.thread.thread_id" v-on:click="username_click_title()">{{this.thread.user_name}}</button> on {{totime(this.thread.created_utc)}}
               </div>
               <br>
-              <div class="thread_body">
+              <div class="thread_body;">
                 <span v-html="thread.body"></span> <br>
                 <button class="button_style" style="margin-top:20px;" v-if="this.$store.state.logged_in==true" v-on:click="open_editor(thread.thread_id,'post')">
                   Reply
@@ -486,7 +486,8 @@ methods: {
                       subcomment_state: this.$store.state.subcomment_state,
                       selected_comment: this.$store.state.selected_comment,
                       subcomments: this.$store.state.subcomments,
-                      subcomments_parent_id: this.$store.state.subcomment_parent_id};
+                      subcomments_parent_id: this.$store.state.subcomment_parent_id,
+                      orderbyscore: this.$store.state.orderbyscore};
     this.$store.commit('update_history',current_states);
     this.$store.commit('change_subcomment_state_to_true');
     this.$store.commit('update_subcomment_parent_id',"t"+this.thread.thread_id);
@@ -843,6 +844,11 @@ img.vote_image:hover {
   background-color:  #6496EE;
 }
 
+.thread_body{
+  text-align: justify;
+  text-justify: inter-word;
+  overflow-wrap: break-word;
+}
 
 /*table, th, td {
   border: 1px solid black;

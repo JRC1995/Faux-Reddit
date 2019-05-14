@@ -321,7 +321,8 @@ methods: {
                       subcomment_state: this.$store.state.subcomment_state,
                       selected_comment: this.$store.state.selected_comment,
                       subcomments: this.$store.state.subcomments,
-                      subcomments_parent_id: this.$store.state.subcomment_parent_id};
+                      subcomments_parent_id: this.$store.state.subcomment_parent_id,
+                      orderbyscore: this.$store.state.orderbyscore};
     this.$store.commit('update_history',current_states);
     this.$store.commit('change_subcomment_state_to_true');
     this.$store.commit('update_subcomment_parent_id',this.$store.state.selected_comment._id);
@@ -659,6 +660,11 @@ img.vote_image:hover {
 
 .button_style:hover {
   background-color:  #6496EE;
+}
+
+.thread_body{
+  text-align: justify;
+  text-justify: inter-word;
 }
 
 
