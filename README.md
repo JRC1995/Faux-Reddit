@@ -11,30 +11,45 @@ CIS 761 Datatbase Project
 
 ## Front-end Technologies
 Vue.js: https://vuejs.org/
+
 Description: Vue.js is an open source progressive JavaScript framework used for building either user-interfaces and sophisticated Single Page Applications (SPA). In SPA, we load one html file and update its components dynamically based on user input and the state of the application; our project is also of this type.
+
 Justification: Vue.js is a powerful JavaScript framework competitive with Angular and React. It is quickly gaining popularity over other frameworks among web developers around the world. It is easy to pick up and it has excelled documentations over the net. As a JavaScript framework, it allows us to implement various client side logic in a more manageable manner compared to plain JavaScript. We setup our project with vue-cli which also allows real-time verification of changes enabling faster development time. It is also very modular, which means we can use reuse more code. 
 
 Axios: https://github.com/axios/axios
+
 Description: Axios is a promise-based HTTP client for the browser and node.js
+
 Justification: It allows asynchronous (thanks to promise-based API)  communication between the client and server (node.js). 
 
 ## Back-end Technologies
 Node.js: https://nodejs.org/en/
+
 Description: Node.js is an asynchronous event-based Javascript runtime designed to handle many different connections concurrently. It uses non-blocking I/O, and it is built upon Chrome's V8 engine, to provide fast, highly scalable servers.
+
 Justification: Node.js is an on-demand web technology in the industry for its unique features. With Node.js and Vue.js stack we can have our entire application based on one language - JavaScript. Being asynchronously driven, after sending a task to the database, Node.js can carry on to the next request, eliminating any need for waiting. As such, Node.js can be run in a single threaded memory-efficient manner; we do not have to worry about dead-locking. It also comes up with multiple modules of high-level abstraction (like express.js) that makes it easier to use. 
 
 XAMPP: https://www.apachefriends.org/index.html
+
 Description: XAMPP is a free, open-source, cross-platform web server solution stack package.
+
 Justification: It allows us to use Apache and MySQL at the same time to let us interact with MySQL database through a browser GUI. It can serve MySQL (MariaDB)  locally. 
 
 ## Other auxiliary technologies:
 We used Vue-CLI to setup our project.
+
 We used Vuex for client-side state management.
+
 We used sweet-alert-2 for better JavaScript popup alerts.
+
 We used ckeditor v5 for text editors.
+
 We used the MongoDB and MySQL modules of Node.js to connect to the respective databases.
+
 We used express.js for Node.js to have higher level abstractions for request handling codes.
+
 We used the Node.js module CORS for Cross-Origin Resource Sharing.
+
 We used moment.js to format time and date. 
 
 ## Teamwork
