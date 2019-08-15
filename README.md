@@ -54,9 +54,16 @@ We used moment.js to format time and date.
 
 ## Teamwork
 Frontend development: Cortez, Dan, Jishnu
+
 Backend development: Cortez, Dan, Jishnu
+
 Real data aggregation: Emily, Jishnu
+
 SQL Testing: Cortez, Dan, Emily, Jishnu
+
 NoSQL: Cortez, Jishnu
+
 Documentation: Cortez, Dan, Emily, Jishnu
+
 Database design: Cortez, Dan, Emily, Jishnu
+
