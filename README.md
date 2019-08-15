@@ -17,7 +17,8 @@ Justification: Vue.js is a powerful JavaScript framework competitive with Angula
 Axios: https://github.com/axios/axios
 Description: Axios is a promise-based HTTP client for the browser and node.js
 Justification: It allows asynchronous (thanks to promise-based API)  communication between the client and server (node.js). 
-8.2 Back-end Technologies
+
+## Back-end Technologies
 Node.js: https://nodejs.org/en/
 Description: Node.js is an asynchronous event-based Javascript runtime designed to handle many different connections concurrently. It uses non-blocking I/O, and it is built upon Chrome's V8 engine, to provide fast, highly scalable servers.
 Justification: Node.js is an on-demand web technology in the industry for its unique features. With Node.js and Vue.js stack we can have our entire application based on one language - JavaScript. Being asynchronously driven, after sending a task to the database, Node.js can carry on to the next request, eliminating any need for waiting. As such, Node.js can be run in a single threaded memory-efficient manner; we do not have to worry about dead-locking. It also comes up with multiple modules of high-level abstraction (like express.js) that makes it easier to use. 
@@ -35,3 +36,12 @@ We used the MongoDB and MySQL modules of Node.js to connect to the respective da
 We used express.js for Node.js to have higher level abstractions for request handling codes.
 We used the Node.js module CORS for Cross-Origin Resource Sharing.
 We used moment.js to format time and date. 
+
+## Teamwork
+Frontend development: Cortez, Dan, Jishnu
+Backend development: Cortez, Dan, Jishnu
+Real data aggregation: Emily, Jishnu
+SQL Testing: Cortez, Dan, Emily, Jishnu
+NoSQL: Cortez, Jishnu
+Documentation: Cortez, Dan, Emily, Jishnu
+Database design: Cortez, Dan, Emily, Jishnu
