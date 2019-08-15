@@ -1,4 +1,4 @@
-# Faux-Reddit
+# Overview
 CIS 761 Datatbase Project
 
   We have called our project “E-Dialectics” (short for “Electronic Dialectics”) as we intended it to be an electronic medium where people with different point of views can engage in discourses (dialectics) with each other. The project is inspired from Reddit and the initial data is populated from a sample of real Reddit data that was retrieved using Google Big-Query. The database is implemented using both SQL and NoSQL technologies in a complementary fashion. Users of E-Dialectics can read discussion threads and the comments for them, which are created by other users; each thread can also be under different subforums (eg. philosophy, computer science, science etc.). Anyone can read the threads and comments, but to be able to interact further they must login to the site; new users can create their own accounts. Users can then create new threads and comments after they log into their account. 
