@@ -67,3 +67,5 @@ Documentation: Cortez, Dan, Emily, Jishnu
 
 Database design: Cortez, Dan, Emily, Jishnu
 
+# Setup
+Coming soon...
