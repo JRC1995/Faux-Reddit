@@ -9,6 +9,13 @@
   
   Anyone who wants to interact with other people over the world through the internet, or share their mind can find this kind of forum appealing. They are our target users. 
 
+## Screenshots
+Front Page
+![alt text](https://i.imgur.com/Z2nqSFC.jpg)
+
+What's displayed after clicking on a thread
+![alt text](https://i.imgur.com/lpdqp1S.png)
+
 ## Front-end Technologies
 ### [Vue.js](https://vuejs.org/)
 
