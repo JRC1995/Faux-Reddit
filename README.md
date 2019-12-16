@@ -42,6 +42,12 @@ Description: XAMPP is a free, open-source, cross-platform web server solution st
 
 Justification: It allows us to use Apache and MySQL at the same time to let us interact with MySQL database through a browser GUI. It can serve MySQL (MariaDB)  locally. 
 
+### [MongoDB](https://www.mongodb.com/)
+
+Description: Allows document-based No-SQL
+
+Justification: It allows us to store comments in a hierarchical format to easily query out nested comments. 
+
 ## Other auxiliary technologies:
 - Vue-CLI to setup our project.
 - Vuex for client-side state management.
@@ -61,5 +67,3 @@ Justification: It allows us to use Apache and MySQL at the same time to let us i
 - Documentation: Cortez, Dan, Emily, Jishnu
 - Database design: Cortez, Dan, Emily, Jishnu
 
-# Setup
-Coming soon...
