@@ -42,11 +42,17 @@ Description: XAMPP is a free, open-source, cross-platform web server solution st
 
 Justification: It allows us to use Apache and MySQL at the same time to let us interact with MySQL database through a browser GUI. It can serve MySQL (MariaDB)  locally. 
 
+### [MariaDB](https://mariadb.com/)
+
+Description: MySQL - ORACLE
+
+Justification: We used it with XAMPP. As per project requirement we needed both an SQL component and a No-SQL component. MariaDB does the job for the SQL component. Reddit threads, users and relations between thread votes, comment votes and users etc. all are handled by MariaDB. 
+
 ### [MongoDB](https://www.mongodb.com/)
 
 Description: Allows document-based No-SQL
 
-Justification: It allows us to store comments in a hierarchical format to easily query out nested comments. 
+Justification: It allows us to store reddit comments in a hierarchical format to easily query out nested comments. 
 
 ## Other auxiliary technologies:
 - Vue-CLI to setup our project.
