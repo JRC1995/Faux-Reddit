@@ -73,3 +73,4 @@ Justification: It allows us to store reddit comments in a hierarchical format to
 - Documentation: Cortez, Dan, Emily, Jishnu
 - Database design: Cortez, Dan, Emily, Jishnu
 
+
